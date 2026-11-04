@@ -3,6 +3,11 @@
 **An agent that files work into enterprise portals that have no API: durable, human-supervised, and unable to
 submit the same thing twice.**
 
+▶ **[Watch the 2-minute demo](docs/demo/portalpilot-demo.mp4)**: messy CSV in, MFA and an approval handled by a human, a hung
+submit recovered without a second click, and my fine-tuned 2B model's misclick caught before it happened.
+
+![A hung submit reconciled against the portal, and the verifier rejecting a small-model click](docs/demo/portalpilot-highlight.gif)
+
 The scenario is a common FDE engagement. A client has a CSV of insurance claims and a legacy provider portal with
 no API, MFA, pop-ups and maintenance pages, and today a person retypes every row. PortalPilot onboards the messy
 CSV, drives real browsers through the portal, and hands the hard moments to a human: approvals, MFA, pages it
@@ -18,7 +23,7 @@ CSV ─▶ onboarding (map · validate · idempotency key) ─▶ Temporal workf
 
 **Stack:** Python 3.12 · FastAPI · Temporal · Playwright · PostgreSQL 16 · S3 · React 19 + TypeScript · Docker ·
 Terraform (ECS Fargate, RDS, ALB, KMS, Secrets Manager, Cloud Map, CloudWatch) · vLLM serving my own GRPO-trained
-Qwen2-VL-2B click policy ([ui-click-rl](../ui-click-rl)) · Claude (`claude-opus-5-5`) as the fallback grounder.
+Qwen2-VL-2B click policy ([ui_click_grpo](https://github.com/snehabasker/ui_click_grpo)) · Claude (`claude-opus-5-5`) as the fallback grounder.
 
 Full blueprint (architecture, schema, workflow design, UI): **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
 
@@ -73,7 +78,7 @@ python e2e/run_e2e.py --chaos          # drives the whole stack and checks the p
 | Temporal UI | http://localhost:8233 |
 | Mock legacy portal | http://localhost:8080 (demo / demo-pass) |
 
-**With the fine-tuned Qwen tier** (WSL2 + vLLM env from ui-click-rl/serving):
+**With the fine-tuned Qwen tier** (WSL2 + the vLLM env from [ui_click_grpo/serving](https://github.com/snehabasker/ui_click_grpo/tree/main/serving); the merged checkpoint is built by its `serving/scripts/merge_adapter.py`):
 
 ```bash
 wsl -d Ubuntu -- bash scripts/serve_qwen_wsl.sh           # serves merged-clean on :8001
@@ -127,3 +132,5 @@ frontend/                  Operator Control & Replay Studio
 infra/terraform/           AWS: VPC, ECS, RDS, ALB, S3, KMS, Secrets, alarms
 e2e/                       end-to-end run + grounding eval
 ```
+
+Re-record the demo: `python e2e/record_demo.py` (local stack + vLLM running; writes `docs/demo/`).

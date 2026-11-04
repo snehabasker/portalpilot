@@ -77,7 +77,7 @@ flowchart LR
 | Tier | What | Cost | When it answers |
 |---|---|---|---|
 | `cache` | point from an earlier success on a page with the same *structural* DOM hash | free, ~1 ms | 2nd+ row of a batch on the same page |
-| `qwen` | **my fine-tuned Qwen2-VL-2B click policy** ([ui-click-rl](../../ui-click-rl)), served by vLLM, prompted exactly as it was trained | ≈ free (own GPU) | most actions |
+| `qwen` | **my fine-tuned Qwen2-VL-2B click policy** ([ui-click-rl](https://github.com/snehabasker/ui_click_grpo)), served by vLLM, prompted exactly as it was trained | ≈ free (own GPU) | most actions |
 | `claude` | `claude-opus-5-5`, structured JSON output, effort `low`, server-side refusal fallback | $ | only what the cheaper tiers got wrong |
 | `dom` | Playwright accessibility locators | free | CI / no-GPU; an optional last resort |
 
