@@ -1,0 +1,11 @@
+--------------------------------------------------------------------------------------------------------------
+|                                              DescribeServices                                              |
++---------+----------+-----------+---------------------------------------------------------------------------+
+| desired | running  |  service  |                                  taskDef                                  |
++---------+----------+-----------+---------------------------------------------------------------------------+
+|  1      |  1       |  api      |  arn:aws:ecs:eu-north-1:778081807744:task-definition/pp-demo-api:4        |
+|  1      |  1       |  worker   |  arn:aws:ecs:eu-north-1:778081807744:task-definition/pp-demo-worker:4     |
+|  1      |  1       |  web      |  arn:aws:ecs:eu-north-1:778081807744:task-definition/pp-demo-web:4        |
+|  1      |  1       |  portal   |  arn:aws:ecs:eu-north-1:778081807744:task-definition/pp-demo-portal:4     |
+|  1      |  1       |  temporal |  arn:aws:ecs:eu-north-1:778081807744:task-definition/pp-demo-temporal:1   |
++---------+----------+-----------+---------------------------------------------------------------------------+

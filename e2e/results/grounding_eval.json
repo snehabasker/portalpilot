@@ -1,0 +1,1865 @@
+[
+ {
+  "page": "login",
+  "target": "Click the \"Username\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 201,
+    "y": 140,
+    "ms": 1932,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(157,175)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 429,
+    "y": 140,
+    "ms": 114,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Password\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 300,
+    "y": 185,
+    "ms": 2702,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(234,231)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 429,
+    "y": 179,
+    "ms": 38,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Sign in\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 195,
+    "y": 217,
+    "ms": 2349,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(152,271)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 225,
+    "y": 213,
+    "ms": 49,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 617,
+    "y": 450,
+    "ms": 1151,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(482,562)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 599,
+    "y": 451,
+    "ms": 94,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search by your reference\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 398,
+    "y": 169,
+    "ms": 2452,
+    "cost": 0.0,
+    "reason": "expected a input, hit <td> ''",
+    "raw": "(311,211)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 539,
+    "y": 170,
+    "ms": 41,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 197,
+    "y": 210,
+    "ms": 1927,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(154,262)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 226,
+    "y": 204,
+    "ms": 36,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"New claim\" link.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 195,
+    "y": 128,
+    "ms": 1864,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(152,160)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 239,
+    "y": 128,
+    "ms": 81,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 617,
+    "y": 450,
+    "ms": 1527,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(482,562)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 599,
+    "y": 451,
+    "ms": 86,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Policy number\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 329,
+    "y": 169,
+    "ms": 1309,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(257,211)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 459,
+    "y": 165,
+    "ms": 28,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Look up policy\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 234,
+    "y": 216,
+    "ms": 2435,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(183,270)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 247,
+    "y": 214,
+    "ms": 28,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 626,
+    "y": 450,
+    "ms": 1115,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(489,562)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 599,
+    "y": 451,
+    "ms": 92,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 197,
+    "y": 284,
+    "ms": 1841,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(154,355)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 231,
+    "y": 283,
+    "ms": 39,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Full name\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 284,
+    "y": 166,
+    "ms": 1117,
+    "cost": 0.0,
+    "reason": "expected a input, hit <td> ''",
+    "raw": "(222,208)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 426,
+    "y": 165,
+    "ms": 68,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Phone\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 293,
+    "y": 206,
+    "ms": 2803,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(229,258)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 426,
+    "y": 204,
+    "ms": 41,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Email\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 293,
+    "y": 245,
+    "ms": 1153,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(229,306)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 426,
+    "y": 243,
+    "ms": 28,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 193,
+    "y": 277,
+    "ms": 2002,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(151,346)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 231,
+    "y": 277,
+    "ms": 36,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Date of loss\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 342,
+    "y": 167,
+    "ms": 1158,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(267,209)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 464,
+    "y": 165,
+    "ms": 76,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Type of loss\" dropdown.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 489,
+    "y": 218,
+    "ms": 1519,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(382,273)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 457,
+    "y": 220,
+    "ms": 29,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Claim amount\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 342,
+    "y": 263,
+    "ms": 1500,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(267,329)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 464,
+    "y": 260,
+    "ms": 36,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Description\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 342,
+    "y": 311,
+    "ms": 1498,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(267,389)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 464,
+    "y": 337,
+    "ms": 31,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Your reference\" input field.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 333,
+    "y": 398,
+    "ms": 2323,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(260,498)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 464,
+    "y": 401,
+    "ms": 52,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 192,
+    "y": 450,
+    "ms": 1123,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(150,562)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 231,
+    "y": 450,
+    "ms": 36,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "review",
+  "target": "Click the \"Submit claim\" button.",
+  "viewport": "1280x800",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 197,
+    "y": 474,
+    "ms": 1578,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(154,592)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 242,
+    "y": 474,
+    "ms": 69,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Username\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 87,
+    "y": 142,
+    "ms": 961,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(85,185)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 301,
+    "y": 140,
+    "ms": 68,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Password\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 163,
+    "y": 184,
+    "ms": 835,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(159,239)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 301,
+    "y": 179,
+    "ms": 45,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Sign in\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 76,
+    "y": 216,
+    "ms": 821,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(74,281)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 97,
+    "y": 213,
+    "ms": 66,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search by your reference\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 279,
+    "y": 170,
+    "ms": 1028,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(272,221)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 411,
+    "y": 170,
+    "ms": 65,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 87,
+    "y": 207,
+    "ms": 1107,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(85,270)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 98,
+    "y": 204,
+    "ms": 37,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"New claim\" link.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 79,
+    "y": 132,
+    "ms": 1041,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(77,172)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 111,
+    "y": 128,
+    "ms": 72,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 494,
+    "y": 436,
+    "ms": 1453,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(482,568)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 471,
+    "y": 435,
+    "ms": 78,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Policy number\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 187,
+    "y": 168,
+    "ms": 1186,
+    "cost": 0.0,
+    "reason": "expected a input, hit <td> 'Format POL-123456'",
+    "raw": "(183,219)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 331,
+    "y": 165,
+    "ms": 39,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Look up policy\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 93,
+    "y": 219,
+    "ms": 2728,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(91,285)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 119,
+    "y": 214,
+    "ms": 35,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 74,
+    "y": 285,
+    "ms": 798,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(72,371)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 103,
+    "y": 283,
+    "ms": 62,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 501,
+    "y": 436,
+    "ms": 824,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(489,568)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 471,
+    "y": 435,
+    "ms": 76,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Full name\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 156,
+    "y": 166,
+    "ms": 1807,
+    "cost": 0.0,
+    "reason": "expected a input, hit <td> ''",
+    "raw": "(152,216)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 298,
+    "y": 165,
+    "ms": 47,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Phone\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 163,
+    "y": 206,
+    "ms": 999,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(159,268)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 298,
+    "y": 204,
+    "ms": 30,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Email\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 125,
+    "y": 246,
+    "ms": 1940,
+    "cost": 0.0,
+    "reason": "expected a input, hit <td> 'Email'",
+    "raw": "(122,320)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 298,
+    "y": 243,
+    "ms": 31,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 72,
+    "y": 278,
+    "ms": 1853,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(70,362)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 103,
+    "y": 277,
+    "ms": 41,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 494,
+    "y": 436,
+    "ms": 1483,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(482,568)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 471,
+    "y": 435,
+    "ms": 71,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Date of loss\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 200,
+    "y": 166,
+    "ms": 1833,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(195,216)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 336,
+    "y": 165,
+    "ms": 31,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Type of loss\" dropdown.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 391,
+    "y": 223,
+    "ms": 1015,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(382,291)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 329,
+    "y": 220,
+    "ms": 42,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Claim amount\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 204,
+    "y": 263,
+    "ms": 1886,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(199,342)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 336,
+    "y": 260,
+    "ms": 30,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Description\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 205,
+    "y": 315,
+    "ms": 1582,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(200,410)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 336,
+    "y": 337,
+    "ms": 34,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Your reference\" input field.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 200,
+    "y": 402,
+    "ms": 1373,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(195,524)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 336,
+    "y": 401,
+    "ms": 28,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 69,
+    "y": 449,
+    "ms": 793,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(67,584)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 103,
+    "y": 450,
+    "ms": 40,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "review",
+  "target": "Click the \"Submit claim\" button.",
+  "viewport": "1024x768",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 73,
+    "y": 470,
+    "ms": 965,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(71,612)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 114,
+    "y": 474,
+    "ms": 61,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Username\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 294,
+    "y": 141,
+    "ms": 1569,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(204,157)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 509,
+    "y": 140,
+    "ms": 61,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Password\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 384,
+    "y": 185,
+    "ms": 1165,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(267,206)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 509,
+    "y": 179,
+    "ms": 29,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "login",
+  "target": "Click the \"Sign in\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 276,
+    "y": 215,
+    "ms": 1534,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(192,239)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 305,
+    "y": 213,
+    "ms": 64,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 684,
+    "y": 499,
+    "ms": 1544,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(475,554)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 679,
+    "y": 501,
+    "ms": 74,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search by your reference\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 370,
+    "y": 170,
+    "ms": 1209,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(257,189)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 619,
+    "y": 170,
+    "ms": 31,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"Search\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 294,
+    "y": 207,
+    "ms": 1260,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(204,230)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 306,
+    "y": 204,
+    "ms": 29,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 674,
+    "y": 499,
+    "ms": 1531,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(468,554)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 679,
+    "y": 501,
+    "ms": 72,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claims",
+  "target": "Click the \"New claim\" link.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 276,
+    "y": 130,
+    "ms": 1668,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(192,145)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 319,
+    "y": 128,
+    "ms": 45,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Policy number\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 441,
+    "y": 172,
+    "ms": 2428,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(306,191)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 539,
+    "y": 165,
+    "ms": 60,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Look up policy\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 276,
+    "y": 217,
+    "ms": 1520,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(192,241)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 327,
+    "y": 214,
+    "ms": 33,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "popup",
+  "target": "Click the \"Not now\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 674,
+    "y": 499,
+    "ms": 2214,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(468,554)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 679,
+    "y": 501,
+    "ms": 86,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "policy",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 281,
+    "y": 283,
+    "ms": 1159,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(195,314)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 311,
+    "y": 283,
+    "ms": 44,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Full name\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 304,
+    "y": 166,
+    "ms": 1546,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(211,185)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 506,
+    "y": 165,
+    "ms": 61,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Phone\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 380,
+    "y": 209,
+    "ms": 2393,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(264,232)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 506,
+    "y": 204,
+    "ms": 33,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Email\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 373,
+    "y": 246,
+    "ms": 2169,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(259,273)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 506,
+    "y": 243,
+    "ms": 27,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "claimant",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 276,
+    "y": 280,
+    "ms": 2464,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(192,311)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 311,
+    "y": 277,
+    "ms": 47,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Date of loss\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": false,
+    "x": 431,
+    "y": 181,
+    "ms": 2176,
+    "cost": 0.0,
+    "reason": "expected a input, hit <div> 'DD/MM/YYYY'",
+    "raw": "(299,201)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 544,
+    "y": 165,
+    "ms": 68,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Type of loss\" dropdown.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 464,
+    "y": 225,
+    "ms": 1182,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(322,250)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 537,
+    "y": 220,
+    "ms": 28,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Claim amount\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 419,
+    "y": 263,
+    "ms": 1450,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(291,292)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 544,
+    "y": 260,
+    "ms": 32,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Description\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 416,
+    "y": 356,
+    "ms": 2142,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(289,395)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 544,
+    "y": 337,
+    "ms": 27,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Your reference\" input field.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 432,
+    "y": 402,
+    "ms": 1152,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(300,447)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 544,
+    "y": 401,
+    "ms": 29,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "incident",
+  "target": "Click the \"Continue\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 272,
+    "y": 451,
+    "ms": 1680,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(189,501)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 311,
+    "y": 450,
+    "ms": 63,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ },
+ {
+  "page": "review",
+  "target": "Click the \"Submit claim\" button.",
+  "viewport": "1440x900",
+  "tiers": {
+   "qwen": {
+    "found": true,
+    "verified": true,
+    "x": 276,
+    "y": 472,
+    "ms": 1117,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": "(192,524)"
+   },
+   "dom": {
+    "found": true,
+    "verified": true,
+    "x": 322,
+    "y": 474,
+    "ms": 81,
+    "cost": 0.0,
+    "reason": "ok",
+    "raw": null
+   }
+  }
+ }
+]

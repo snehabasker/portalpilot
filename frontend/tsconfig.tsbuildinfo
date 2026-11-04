@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/uselive.ts","./src/components/screenshotstage.tsx","./src/components/bits.tsx","./src/pages/batchdetail.tsx","./src/pages/batches.tsx","./src/pages/inbox.tsx","./src/pages/metrics.tsx","./src/pages/studio.tsx"],"version":"5.9.3"}

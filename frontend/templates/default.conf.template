@@ -1,0 +1,19 @@
+# Rendered by the nginx image's entrypoint (envsubst). NGINX_LOCAL_RESOLVERS is filled in from /etc/resolv.conf,
+# so this works on Docker (127.0.0.11) and in an AWS VPC alike. Resolving per request means nginx starts even
+# when the API is not up yet; in AWS the ALB routes /api directly and this block is only a fallback.
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+  resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+  location /api/ {
+    set $api_upstream http://${API_UPSTREAM};
+    proxy_pass $api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 3600s;
+    client_max_body_size 20m;
+  }
+  location / { try_files $uri /index.html; }
+}

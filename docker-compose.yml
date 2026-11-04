@@ -1,0 +1,97 @@
+# Local stack: everything the AWS deployment runs, on one machine.
+#   docker compose up --build
+#   UI:            http://localhost:5173
+#   API docs:      http://localhost:8000/docs
+#   Temporal UI:   http://localhost:8233
+#   Mock portal:   http://localhost:8080   (user demo / demo-pass)
+name: portalpilot
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql://portalpilot:portalpilot@postgres:5432/portalpilot
+  TEMPORAL_ADDRESS: temporal:7233
+  S3_ENDPOINT: http://s3:9090
+  S3_BUCKET: portalpilot-screens
+  AWS_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: local
+  AWS_SECRET_ACCESS_KEY: local
+  KEY_PROVIDER: local
+  LOCAL_MASTER_KEY: ${LOCAL_MASTER_KEY:-NcZK99xkbNThwGmjFqbrAivVZXwd85zTkw2C8nCMxUs=}
+  OPERATOR_TOKEN: ${OPERATOR_TOKEN:-dev-operator-token}
+  PORTAL_URL: http://portal:8080
+  # cache,qwen,claude in production; cache,dom needs no GPU and no API key
+  GROUNDER_CHAIN: ${GROUNDER_CHAIN:-cache,dom}
+  QWEN_URL: ${QWEN_URL:-http://host.docker.internal:8000}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: portalpilot
+      POSTGRES_PASSWORD: portalpilot
+      POSTGRES_DB: portalpilot
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portalpilot"]
+      interval: 3s
+      retries: 20
+
+  temporal:
+    image: temporalio/auto-setup:1.29.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: portalpilot
+      POSTGRES_PWD: portalpilot
+      POSTGRES_SEEDS: postgres
+    ports: ["7233:7233"]
+
+  temporal-ui:
+    image: temporalio/ui:2.42.1
+    depends_on: [temporal]
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    ports: ["8233:8080"]
+
+  s3:
+    image: adobe/s3mock:4.0.0
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: portalpilot-screens
+    ports: ["9090:9090"]
+
+  portal:
+    build: ./mock_portal
+    ports: ["8080:8080"]
+
+  api:
+    build: ./backend
+    depends_on:
+      postgres: {condition: service_healthy}
+      temporal: {condition: service_started}   # api/worker retry until it answers
+      s3: {condition: service_started}
+    environment: *app-env
+    ports: ["8000:8000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "portalpilot.orchestration.worker"]
+    depends_on:
+      api: {condition: service_started}
+      portal: {condition: service_started}
+    environment:
+      <<: *app-env
+      MAX_BROWSER_SESSIONS: "4"
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    shm_size: 1gb
+
+  web:
+    build: ./frontend
+    depends_on: [api]
+    ports: ["5173:80"]
+
+volumes:
+  pgdata:

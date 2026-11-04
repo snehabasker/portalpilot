@@ -1,0 +1,10 @@
+-------------------------------
+|     DescribeDBInstances     |
++------------+----------------+
+|  az        |  eu-north-1a   |
+|  class     |  db.t4g.micro  |
+|  encrypted |  True          |
+|  engine    |  postgres      |
+|  status    |  available     |
+|  version   |  16.13         |
++------------+----------------+

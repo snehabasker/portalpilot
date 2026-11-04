@@ -1,0 +1,7 @@
+Pol #,Insured Name,DOL,Peril,Amount Claimed,What happened,Tel,E-mail,Source ID
+123456,"DOE, JANE",14/03/2026,rear ended,"$1,250.50",Hit at traffic lights on the A40,+44 7700 900123,jane.doe@example.com,ACME-1001
+pol 234567,bob smith,2026-02-11,Burst pipe,980,Kitchen flooded overnight,07700 900456,bob.smith@example.com,ACME-1002
+345678,Priya Raman,02 Jan 2026,stolen,"7,400.00",Bike stolen from locked garage,07700 900789,priya@example.com,ACME-1003
+456781,LEE CHEN,21/01/2026,Fire,2200,Small kitchen fire,,lee.chen@example.com,ACME-1004
+567812,Maria Rossi,05/02/2026,collision,640.25,Car park scrape,07700 900111,maria.rossi@example,ACME-1005
+999,Ann Lee,31/02/2026,meteor,-5,,,,ACME-1006
