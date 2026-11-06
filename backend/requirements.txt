@@ -10,3 +10,4 @@ boto3==1.43.123
 cryptography==50.0.2
 pillow==13.0.0
 pydantic==2.14.2
+prometheus-client==0.25.0

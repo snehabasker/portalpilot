@@ -1,0 +1,114 @@
+# promtool unit tests for the alert rules:
+#   docker run --rm -v "$PWD/deploy/observability/prometheus:/p" --entrypoint promtool prom/prometheus:v3.5.0 \
+#     test rules /p/tests/alerts_test.yml
+rule_files: [../rules/slo.yml, ../rules/alerts.yml]
+evaluation_interval: 1m
+
+tests:
+  - name: a repeated submit click pages immediately
+    interval: 1m
+    input_series:
+      - series: portalpilot_double_submit_suspects{job="api"}
+        values: "0 0 1 1"
+    alert_rule_test:
+      - { eval_time: 1m, alertname: DoubleSubmitSuspected, exp_alerts: [] }
+      - eval_time: 2m
+        alertname: DoubleSubmitSuspected
+        exp_alerts:
+          - exp_labels: { severity: page, job: api }
+            exp_annotations:
+              summary: "1 claim(s) had the submit button pressed more than once"
+              description: >-
+                A submit_ledger row has clicks > 1. That is legitimate only if a reconcile proved the first click never
+                reached the portal. Check each one on the portal before doing anything else.
+              runbook_url: docs/ops/runbooks/double-submit-suspected.md
+
+  - name: no workers pages after 3 minutes, including when the target disappears entirely
+    interval: 1m
+    input_series:
+      - series: up{job="worker", instance="w1"}
+        values: "1 0 0 0 0 0"
+    alert_rule_test:
+      - { eval_time: 3m, alertname: NoWorkers, exp_alerts: [] }
+      - eval_time: 5m
+        alertname: NoWorkers
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: No browser workers are running; claims are queued (safely) and not progressing
+              runbook_url: docs/ops/runbooks/no-workers.md
+
+  - name: fast burn needs both windows over 14.4x (7.2 % errors)
+    interval: 1m
+    input_series:
+      # an hour of clean traffic, then 10 % errors (1 of 10 req/s)
+      - series: portalpilot_http_requests_total{code="200", route="/api/batches", method="GET"}
+        values: "0+600x60 36000+540x70"
+      - series: portalpilot_http_requests_total{code="500", route="/api/batches", method="GET"}
+        values: "0x60 0+60x70"
+    alert_rule_test:
+      # 5 min in: the 5 m window is at 10 %, but the 1 h window is under 1 %, so no page yet
+      - { eval_time: 65m, alertname: ApiErrorBudgetBurnFast, exp_alerts: [] }
+      - eval_time: 125m   # 1 h window fully inside the error period: exactly 10 %
+        alertname: ApiErrorBudgetBurnFast
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: "The API is burning its 30-day error budget 14x too fast (10% errors)"
+              runbook_url: docs/ops/runbooks/api-errors.md
+
+  - name: a short blip does not burn the budget alert
+    interval: 1m
+    input_series:
+      - series: portalpilot_http_requests_total{code="200", route="/api/batches", method="GET"}
+        values: "0+600x70"
+      - series: portalpilot_http_requests_total{code="500", route="/api/batches", method="GET"}
+        values: "0x60 0+300x5 1500x5"   # 5 minutes of heavy errors, then nothing
+    alert_rule_test:
+      - { eval_time: 70m, alertname: ApiErrorBudgetBurnFast, exp_alerts: [] }
+
+  - name: a flaky portal opens a ticket, not a page
+    interval: 1m
+    input_series:
+      - series: portalpilot_stage_duration_seconds_count{stage="fill_policy", outcome="ok"}
+        values: "0+6x30"
+      - series: portalpilot_stage_duration_seconds_count{stage="fill_policy", outcome="retryable_error"}
+        values: "0+4x30"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: PortalDegraded
+        exp_alerts:
+          - exp_labels: { severity: ticket }
+            exp_annotations:
+              summary: "40% of portal stage attempts are failing and being retried"
+              description: Maintenance pages, 5xx or timeouts from the client's portal. Retries back off; no work is lost.
+              runbook_url: docs/ops/runbooks/portal-degraded.md
+
+  - name: a burst of stuck tasks alerts within minutes, a trickle does not
+    interval: 1m
+    input_series:
+      - series: portalpilot_interventions_opened_total{kind="unexpected_page", instance="w1"}
+        values: "0 0 1 2 3 3 3 3 3 3 3 3"
+      - series: portalpilot_interventions_opened_total{kind="approval", instance="w1"}
+        values: "0+1x11"   # approvals are normal work, never counted
+    alert_rule_test:
+      - { eval_time: 3m, alertname: StuckTasksBurst, exp_alerts: [] }
+      - eval_time: 5m
+        alertname: StuckTasksBurst
+        exp_alerts:
+          - exp_labels: { severity: ticket }
+            exp_annotations:
+              summary: "3 tasks handed themselves to a human in 5 minutes"
+              description: Several tasks got stuck at once. Usually the portal is down or changed; check one screenshot first.
+              runbook_url: docs/ops/runbooks/portal-degraded.md
+      - { eval_time: 11m, alertname: StuckTasksBurst, exp_alerts: [] }
+
+  - name: stalled tasks only alert while workers are up
+    interval: 1m
+    input_series:
+      - series: portalpilot_running_task_oldest_update_seconds
+        values: "1000x10"
+      - series: up{job="worker", instance="w1"}
+        values: "0x10"
+    alert_rule_test:
+      - { eval_time: 10m, alertname: TasksStalled, exp_alerts: [] }   # NoWorkers covers this case instead

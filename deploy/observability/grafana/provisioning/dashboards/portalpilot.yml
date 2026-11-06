@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: portalpilot
+    folder: PortalPilot
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false   # dashboards are code: edit build_dashboards.py and regenerate
+    options:
+      path: /var/lib/grafana/dashboards

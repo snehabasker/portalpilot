@@ -18,7 +18,8 @@ export MSYS_NO_PATHCONV=1  # Git Bash on Windows: don't rewrite /w paths
 
 AWS_ENV=(-e AWS_PROFILE -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_REGION
          -e AWS_DEFAULT_REGION -e TF_VAR_anthropic_api_key -v "$HOME/.aws:/root/.aws:ro")
-tf()  { docker run --rm -i "${AWS_ENV[@]}" -v "$TF_DIR:/w" -w /w hashicorp/terraform:1.17.1 "$@"; }
+# the repo root is mounted (not just infra/terraform) because the Lambda zips are built from serverless/
+tf()  { docker run --rm -i "${AWS_ENV[@]}" -v "$ROOT:/repo" -w /repo/infra/terraform hashicorp/terraform:1.17.1 "$@"; }
 aws() { docker run --rm -i "${AWS_ENV[@]}" amazon/aws-cli:2.27.50 "$@"; }
 
 [ -f "$TF_DIR/$VARS" ] || { echo "missing $TF_DIR/$VARS"; exit 1; }

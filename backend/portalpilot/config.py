@@ -45,6 +45,12 @@ class Settings:
     viewport_h: int = 800
     worker_id: str = field(default_factory=lambda: os.environ.get("WORKER_ID") or f"{socket.gethostname()}-{uuid.uuid4().hex[:6]}")
     max_browser_sessions: int = field(default_factory=lambda: int(_env("MAX_BROWSER_SESSIONS", "4")))
+    metrics_port: int = field(default_factory=lambda: int(_env("METRICS_PORT", "9100")))
+
+    # outbound domain events (transactional outbox relay): 'none', 'log' or 'eventbridge'
+    event_sink: str = field(default_factory=lambda: _env("EVENT_SINK", "none"))
+    event_bus_name: str = field(default_factory=lambda: _env("EVENT_BUS_NAME", "portalpilot"))
+    event_relay_interval_s: float = field(default_factory=lambda: float(_env("EVENT_RELAY_INTERVAL_S", "2")))
 
 
 _settings: Settings | None = None

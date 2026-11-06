@@ -1,0 +1,101 @@
+{{- $fn := include "pp.fullname" . }}
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fn }}
+  labels: {{- include "pp.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fn }}
+  labels: {{- include "pp.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}{{ toYaml . | nindent 4 }}{{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          # /metrics is deliberately not routed: it is for in-cluster scrapers only
+          - { path: /api, pathType: Prefix, backend: { service: { name: {{ $fn }}-api, port: { name: http } } } }
+          - { path: /, pathType: Prefix, backend: { service: { name: {{ $fn }}-web, port: { name: http } } } }
+{{- end }}
+{{- if .Values.metrics.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $fn }}
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+    matchExpressions:
+      - { key: app.kubernetes.io/component, operator: In, values: [api, worker, relay] }
+  endpoints:
+    - { port: http, path: /metrics, interval: {{ .Values.metrics.serviceMonitor.interval }} }
+    - { port: metrics, path: /metrics, interval: {{ .Values.metrics.serviceMonitor.interval }} }
+  # job labels must match the rules (job="api" / job="worker"): take them from the component label
+  jobLabel: app.kubernetes.io/component
+{{- end }}
+{{- if .Values.metrics.prometheusRule.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $fn }}
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  groups:
+    {{- range $path, $_ := .Files.Glob "files/rules/*.yml" }}
+    {{- $doc := $.Files.Get $path | fromYaml }}
+    {{- toYaml $doc.groups | nindent 4 }}
+    {{- end }}
+{{- end }}
+{{- if .Values.networkPolicy.enabled }}
+---
+# Default-deny ingress for the release, then allow exactly the paths the system uses.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fn }}-default-deny
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app.kubernetes.io/instance: {{ .Release.Name }} }
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fn }}-allow
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: { app.kubernetes.io/instance: {{ .Release.Name }} }
+  policyTypes: [Ingress]
+  ingress:
+    # web and api: reachable from anywhere in the cluster (ingress controller, port-forward, scrapers)
+    - ports: [{ port: 80 }, { port: 8000 }]
+    # metrics ports: any namespace (Prometheus usually lives elsewhere)
+    - from: [{ namespaceSelector: {} }]
+      ports: [{ port: 9100 }]
+    # data plane: only pods of this release
+    - from: [{ podSelector: { matchLabels: { app.kubernetes.io/instance: {{ .Release.Name }} } } }]
+      ports: [{ port: 5432 }, { port: 7233 }, { port: 9090 }, { port: 8080 }]
+{{- end }}

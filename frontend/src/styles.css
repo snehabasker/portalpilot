@@ -1,37 +1,31 @@
+@import "./design-system/tokens.css";
+@import "./design-system/components.css";
+
+/* App layout. Colors, spacing and type come from the design system (src/design-system/tokens.json); the short
+   names below are aliases kept so the existing page styles read naturally. */
 :root {
-  --bg: #0e1116;
-  --panel: #161b22;
-  --panel-2: #1c222b;
-  --line: #2a313c;
-  --text: #e6e9ee;
-  --muted: #8b95a5;
-  --accent: #5b9dff;
-  --ok: #3fb97b;
-  --warn: #e3a33b;
-  --bad: #ef6461;
-  --qwen: #b18cff;
-  --claude: #e8915a;
-  --cache: #4fc1c9;
-  --dom: #8b95a5;
-  --operator: #f2c94c;
-  --radius: 8px;
-  --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, monospace;
-  color-scheme: dark;
-}
-:root[data-theme="light"] {
-  --bg: #f4f6f9; --panel: #ffffff; --panel-2: #f0f2f6; --line: #d9dee6; --text: #18202b; --muted: #5d6878;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #f4f6f9; --panel: #ffffff; --panel-2: #f0f2f6; --line: #d9dee6; --text: #18202b; --muted: #5d6878;
-    color-scheme: light;
-  }
+  --bg: var(--color-bg);
+  --panel: var(--color-surface);
+  --panel-2: var(--color-surface-2);
+  --line: var(--color-line);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --ok: var(--color-ok);
+  --warn: var(--color-warn);
+  --bad: var(--color-bad);
+  --qwen: var(--color-tier-qwen);
+  --claude: var(--color-tier-claude);
+  --cache: var(--color-tier-cache);
+  --dom: var(--color-tier-dom);
+  --operator: var(--color-operator);
+  --radius: var(--radius-lg);
+  --mono: var(--font-mono);
 }
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--text); font: var(--font-size-md)/1.45 var(--font-sans); }
 a { color: var(--accent); text-decoration: none; }
 button {
   font: inherit; color: var(--text); background: var(--panel-2); border: 1px solid var(--line);
@@ -39,7 +33,8 @@ button {
 }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: .45; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--color-on-accent); font-weight: 600; }
 button.danger { border-color: var(--bad); color: var(--bad); }
 button.ok { border-color: var(--ok); color: var(--ok); }
 input, select, textarea {
@@ -56,7 +51,7 @@ code, .mono { font-family: var(--mono); font-size: 12.5px; }
 .nav .brand small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
 .nav a { color: var(--text); padding: 7px 10px; border-radius: 6px; display: flex; justify-content: space-between; }
 .nav a.active, .nav a:hover { background: var(--panel-2); }
-.nav .badge { background: var(--warn); color: #111; border-radius: 10px; padding: 0 7px; font-size: 12px; font-weight: 600; }
+.nav .badge { background: var(--warn); color: var(--color-on-warn); border-radius: 10px; padding: 0 7px; font-size: 12px; font-weight: 600; }
 .nav .foot { margin-top: auto; font-size: 12px; color: var(--muted); padding: 0 8px; }
 .main { overflow: auto; padding: 20px 24px; min-width: 0; }
 h1 { font-size: 20px; margin: 0 0 14px; }
@@ -75,7 +70,7 @@ table.t tr.click:hover td { background: var(--panel-2); }
 .s-running, .s-queued { color: var(--accent); }
 .s-waiting_human, .s-completed_with_errors, .s-open { color: var(--warn); }
 .s-failed, .s-rejected, .s-expired, .s-invalid { color: var(--bad); }
-.g { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #111; }
+.g { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 11px; font-weight: 700; color: var(--color-on-tier); }
 .g-qwen { background: var(--qwen); } .g-claude { background: var(--claude); } .g-cache { background: var(--cache); }
 .g-dom { background: var(--dom); } .g-operator { background: var(--operator); } .g-none { background: var(--line); color: var(--muted); }
 
@@ -95,7 +90,7 @@ table.t tr.click:hover td { background: var(--panel-2); }
 .stagebar { display: flex; gap: 4px; }
 .stagebar div { flex: 1; text-align: center; font-size: 11px; padding: 4px 2px; border-radius: 4px; background: var(--panel-2); color: var(--muted); }
 .stagebar div.done { background: color-mix(in srgb, var(--ok) 25%, transparent); color: var(--text); }
-.stagebar div.cur { background: var(--accent); color: #fff; }
+.stagebar div.cur { background: var(--accent); color: var(--color-on-accent); }
 
 .viewer { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .stagebox { position: relative; background: #000; border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; }

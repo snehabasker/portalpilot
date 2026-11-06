@@ -1,0 +1,39 @@
+# Routes every alert to the Studio's incident log. A client with a pager adds a receiver next to `studio`
+# (PagerDuty / Opsgenie configs are commented below) and keeps the Studio route, which is the shared record.
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: studio
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="page"]
+      receiver: studio          # + pager
+      group_wait: 10s
+      repeat_interval: 1h
+    - matchers: [severity="ticket"]
+      receiver: studio
+
+# A dead API makes the budget-burn alerts redundant: page once, for the cause.
+inhibit_rules:
+  - source_matchers: [alertname="ApiDown"]
+    target_matchers: [alertname=~"ApiErrorBudgetBurn.*|BusinessMetricsBlind"]
+  - source_matchers: [alertname="NoWorkers"]
+    target_matchers: [alertname=~"TasksStalled|PortalDegraded"]
+
+receivers:
+  - name: studio
+    webhook_configs:
+      - url: http://api:8000/api/incidents/alertmanager
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            # local dev token; in Kubernetes the chart mounts the operator token as a file (credentials_file)
+            credentials: dev-operator-token
+  # - name: pager
+  #   pagerduty_configs:
+  #     - routing_key_file: /etc/alertmanager/secrets/pagerduty_key

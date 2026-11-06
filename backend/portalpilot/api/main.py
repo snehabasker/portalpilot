@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from contextlib import asynccontextmanager
 from typing import Any, Optional
 
@@ -11,11 +12,15 @@ import asyncpg
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile, WebSocket, \
     WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
 from pydantic import BaseModel
+from starlette.requests import Request
 from temporalio.client import Client
+from temporalio.exceptions import WorkflowAlreadyStartedError
 
-from .. import db, storage, vault
+from .. import db, incidents, storage, vault
 from ..config import settings
+from ..observability import HTTP_REQUESTS, HTTP_SECONDS, BusinessCollector
 from ..onboarding import claude_header_mapper, parse_csv
 from ..orchestration.shared import ApprovalDecision, BatchInput, InputProvided, OperatorAction, Release
 from ..orchestration.workflows import BatchWorkflow, ClaimTaskWorkflow
@@ -75,12 +80,30 @@ async def lifespan(app: FastAPI):
     await db.migrate()
     await asyncio.to_thread(storage.ensure_bucket)
     await hub.start()
+    collector = BusinessCollector(asyncio.get_running_loop(), db.pool)
+    REGISTRY.register(collector)
     yield
+    REGISTRY.unregister(collector)
     await db.close()
 
 
 app = FastAPI(title="PortalPilot", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+@app.middleware("http")
+async def http_metrics(request: Request, call_next):
+    t0, code = time.perf_counter(), 500
+    try:
+        resp = await call_next(request)
+        code = resp.status_code
+        return resp
+    finally:
+        route = request.scope.get("route")
+        path = getattr(route, "path", "unmatched")  # the template (/api/tasks/{task_id}), never the raw id
+        if path != "/metrics":
+            HTTP_REQUESTS.labels(request.method, path, str(code)).inc()
+            HTTP_SECONDS.labels(request.method, path).observe(time.perf_counter() - t0)
 
 
 def operator(authorization: Optional[str] = Header(None), token: Optional[str] = Query(None),
@@ -113,6 +136,13 @@ def _jsonable(r: asyncpg.Record | dict) -> dict:
 async def healthz():
     await (await db.pool()).fetchval("SELECT 1")
     return {"ok": True}
+
+
+@app.get("/metrics", include_in_schema=False)
+async def prometheus_metrics():
+    # The business collector queries Postgres through this loop, so render off-loop to avoid a deadlock.
+    body = await asyncio.to_thread(generate_latest, REGISTRY)
+    return Response(body, media_type=CONTENT_TYPE_LATEST)
 
 
 # ------------------------------------------------------------------------------------------- credentials
@@ -165,19 +195,70 @@ async def preview_batch(file: UploadFile = File(...), day_first: bool = Form(Tru
 @app.post("/api/batches")
 async def create_batch(file: UploadFile = File(...), name: str = Form(...), credential_id: str = Form(...),
                        approval_threshold: Optional[float] = Form(None), max_concurrency: int = Form(3),
-                       day_first: bool = Form(True), portal: str = Form("acme-claims"), op: str = Depends(operator)):
-    mapping, rows = parse_csv(await file.read(), "demo", portal, day_first, llm=_mapper())
+                       day_first: bool = Form(True), portal: str = Form("acme-claims"),
+                       source_ref: Optional[str] = Form(None), op: str = Depends(operator)):
+    """`source_ref` identifies where the file came from (the intake Lambda sends `s3://bucket/key#etag`). The same
+    ref twice returns the first batch instead of creating another: event delivery is at-least-once."""
     p = await db.pool()
     tid = await tenant_id()
+    if source_ref:
+        existing = await p.fetchval("SELECT id FROM batches WHERE tenant_id = $1 AND source_ref = $2", tid, source_ref)
+        if existing:
+            return await _redelivered(existing)
+    mapping, rows = parse_csv(await file.read(), "demo", portal, day_first, llm=_mapper())
     runnable: list[str] = []
     skipped: list[dict] = []
+    try:
+        bid = await _insert_batch(p, tid, name, portal, credential_id, file.filename, mapping, rows, approval_threshold,
+                                  max_concurrency, op, source_ref, runnable, skipped)
+    except asyncpg.UniqueViolationError:
+        if not source_ref:
+            raise
+        # a concurrent delivery of the same object won the insert
+        existing = await p.fetchval("SELECT id FROM batches WHERE tenant_id = $1 AND source_ref = $2", tid, source_ref)
+        return await _redelivered(existing)
+    await _start_batch(bid, runnable, max_concurrency)
+    return {"id": str(bid), "runnable": len(runnable), "invalid": sum(not r.valid for r in rows), "skipped": skipped}
+
+
+async def _start_batch(bid, runnable: list[str], max_concurrency: int) -> None:
+    p = await db.pool()
+    wf_id = f"batch-{bid}"
+    try:
+        await (await temporal()).start_workflow(BatchWorkflow.run,
+                                                BatchInput(str(bid), runnable, max(1, min(max_concurrency, 10))),
+                                                id=wf_id, task_queue=settings().task_queue)
+    except WorkflowAlreadyStartedError:
+        pass  # a redelivery raced us here; the workflow id makes the start idempotent
+    await p.execute("UPDATE batches SET workflow_id = $2 WHERE id = $1", bid, wf_id)
+    for t in runnable:
+        await p.execute("UPDATE tasks SET workflow_id = $2 WHERE id = $1", t, f"task-{t}")
+    await db.publish("batch.started", {"runnable": len(runnable)}, batch_id=bid)
+
+
+async def _redelivered(bid) -> dict:
+    """The same source file again. If the first delivery stored the batch but died before starting it, start it
+    now; otherwise report the existing batch."""
+    p = await db.pool()
+    b = await p.fetchrow("SELECT workflow_id, max_concurrency FROM batches WHERE id = $1", bid)
+    resumed = 0
+    if b["workflow_id"] is None:
+        runnable = [str(r["id"]) for r in await p.fetch(
+            "SELECT id FROM tasks WHERE batch_id = $1 AND status = 'queued' ORDER BY row_number", bid)]
+        await _start_batch(bid, runnable, b["max_concurrency"])
+        resumed = len(runnable)
+    return {"id": str(bid), "duplicate": True, "runnable": resumed, "invalid": 0, "skipped": []}
+
+
+async def _insert_batch(p, tid, name, portal, credential_id, filename, mapping, rows, approval_threshold,
+                        max_concurrency, op, source_ref, runnable: list, skipped: list):
     async with p.acquire() as conn, conn.transaction():
         bid = await conn.fetchval(
             """INSERT INTO batches (tenant_id, name, portal, credential_id, source_filename, column_mapping,
-                                    approval_threshold, max_concurrency, created_by, status)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'running') RETURNING id""",
-            tid, name, portal, credential_id, file.filename, [m.__dict__ for m in mapping], approval_threshold,
-            max(1, min(max_concurrency, 10)), op)
+                                    approval_threshold, max_concurrency, created_by, status, source_ref)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'running',$10) RETURNING id""",
+            tid, name, portal, credential_id, filename, [m.__dict__ for m in mapping], approval_threshold,
+            max(1, min(max_concurrency, 10)), op, source_ref)
         for r in rows:
             task_id = await conn.fetchval(
                 """INSERT INTO tasks (tenant_id, batch_id, row_number, kind, idempotency_key, payload, raw_row,
@@ -193,14 +274,7 @@ async def create_batch(file: UploadFile = File(...), name: str = Form(...), cred
                 runnable.append(str(task_id))
         await db.audit(f"operator:{op}", "batch.created", "batch", bid,
                        {"rows": len(rows), "runnable": len(runnable), "skipped": len(skipped)}, tid, conn)
-    wf_id = f"batch-{bid}"
-    await (await temporal()).start_workflow(BatchWorkflow.run, BatchInput(str(bid), runnable, max(1, min(max_concurrency, 10))),
-                                            id=wf_id, task_queue=settings().task_queue)
-    await p.execute("UPDATE batches SET workflow_id = $2 WHERE id = $1", bid, wf_id)
-    for t in runnable:
-        await p.execute("UPDATE tasks SET workflow_id = $2 WHERE id = $1", t, f"task-{t}")
-    await db.publish("batch.started", {"runnable": len(runnable)}, batch_id=bid)
-    return {"id": str(bid), "runnable": len(runnable), "invalid": sum(not r.valid for r in rows), "skipped": skipped}
+    return bid
 
 
 @app.get("/api/batches")
@@ -374,6 +448,59 @@ async def metrics(op: str = Depends(operator)):
                   count(*) FILTER (WHERE state = 'reconciled_found') AS recovered_unknown_outcomes FROM submit_ledger""")
     return {"grounders": [_jsonable(g) for g in grounders], "escalations": _jsonable(escalations),
             "tasks": {r["status"]: r["n"] for r in tasks}, "ledger": _jsonable(ledger)}
+
+
+# ------------------------------------------------------------------------------------------- incidents
+@app.post("/api/incidents/alertmanager")
+async def alertmanager_webhook(payload: dict, op: str = Depends(operator)):
+    """Alertmanager webhook receiver (authorization: Bearer <operator token> in its http_config)."""
+    return {"changes": await incidents.ingest_alertmanager(payload)}
+
+
+@app.get("/api/incidents")
+async def list_incidents(status: Optional[str] = None, op: str = Depends(operator)):
+    p = await db.pool()
+    if status == "open":
+        rows = await p.fetch("SELECT * FROM incidents WHERE status <> 'resolved' ORDER BY severity, started_at DESC")
+    else:
+        rows = await p.fetch("SELECT * FROM incidents ORDER BY created_at DESC LIMIT 100")
+    return [_jsonable(r) for r in rows]
+
+
+@app.get("/api/incidents/{iid}")
+async def get_incident(iid: str, op: str = Depends(operator)):
+    p = await db.pool()
+    inc = await p.fetchrow("SELECT * FROM incidents WHERE id = $1", iid)
+    if inc is None:
+        raise HTTPException(404)
+    events = await p.fetch("SELECT * FROM incident_events WHERE incident_id = $1 ORDER BY id", iid)
+    return {"incident": _jsonable(inc), "events": [_jsonable(e) for e in events]}
+
+
+class NoteIn(BaseModel):
+    body: str = ""
+
+
+@app.post("/api/incidents/{iid}/ack")
+async def ack_incident(iid: str, op: str = Depends(operator)):
+    if not await incidents.acknowledge(iid, op):
+        raise HTTPException(409, "incident is not firing")
+    return {"ok": True}
+
+
+@app.post("/api/incidents/{iid}/notes")
+async def note_incident(iid: str, body: NoteIn, op: str = Depends(operator)):
+    if not body.body.strip():
+        raise HTTPException(422, "empty note")
+    await incidents.add_note(iid, op, body.body.strip()[:4000])
+    return {"ok": True}
+
+
+@app.post("/api/incidents/{iid}/resolve")
+async def resolve_incident(iid: str, body: NoteIn, op: str = Depends(operator)):
+    if not await incidents.resolve(iid, op, body.body.strip()[:4000]):
+        raise HTTPException(409, "incident is already resolved")
+    return {"ok": True}
 
 
 # ------------------------------------------------------------------------------------------- websocket

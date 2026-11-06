@@ -25,7 +25,9 @@ CSV ─▶ onboarding (map · validate · idempotency key) ─▶ Temporal workf
 Terraform (ECS Fargate, RDS, ALB, KMS, Secrets Manager, Cloud Map, CloudWatch) · vLLM serving my own GRPO-trained
 Qwen2-VL-2B click policy ([ui_click_grpo](https://github.com/snehabasker/ui_click_grpo)) · Claude (`claude-opus-5-5`) as the fallback grounder.
 
-Full blueprint (architecture, schema, workflow design, UI): **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+Full blueprint (architecture, schema, workflow design, UI, operations): **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** ·
+decisions and their alternatives: **[docs/adr](docs/adr/README.md)** · on-call, runbooks, postmortems:
+**[docs/ops](docs/ops/README.md)** · client workshops: **[docs/workshops](docs/workshops/README.md)**
 
 ## Results
 
@@ -37,7 +39,8 @@ Full blueprint (architecture, schema, workflow design, UI): **[docs/ARCHITECTURE
 | Worker SIGKILLed mid-batch | 3 in-flight tasks resumed on a new worker; still 4 claims for 4 clicks |
 | Same CSV uploaded again | 0 tasks started |
 | **Deployed to AWS** (ECS Fargate, RDS, KMS, ALB in eu-north-1), same hostile e2e run | all 8 checks pass: 4 claims for 4 clicks, hung submit reconciled |
-| Tests | 27 unit + workflow tests (12 Temporal scenarios: unknown outcomes, session loss, approvals, expiry, MFA, takeover) |
+| **Game day** (portal 503 storm, then worker killed mid-batch), against the full ops stack | first run: detected in 6 m 43 s and 3 m 22 s, 0 duplicates, and 4 weaknesses found (2 in the system, 2 in the monitoring). After the fixes: outage detected in **1 m 47 s**, 16 of 16 tasks succeeded, 16 claims for 16 clicks → [postmortem](docs/ops/postmortems/2026-11-06-game-day.md) |
+| Tests | 37 backend (12 Temporal scenarios) · 9 Lambda tests on moto · 7 promtool alert-rule tests · 34 WCAG contrast checks · Helm chart on kind in CI |
 
 Details and caveats: [docs/ARCHITECTURE.md § 6](docs/ARCHITECTURE.md#6-measured-results).
 
@@ -60,6 +63,16 @@ Details and caveats: [docs/ARCHITECTURE.md § 6](docs/ARCHITECTURE.md#6-measured
   with every decision shown for review. Normalized dates, amounts and names; invalid rows kept with field errors.
   ([onboarding.py](backend/portalpilot/onboarding.py))
 * **One-command, per-client AWS deploy.** Terraform with one tfvars file per client, least-privilege IAM, alarms.
+* **Event-driven intake and notifications.** Drop a CSV in S3 → EventBridge → SQS (+DLQ) → Lambda starts the batch,
+  idempotent on the object's ETag. Domain events leave through a transactional-outbox relay to an EventBridge bus,
+  where a Lambda posts operator alerts to chat, deduped in DynamoDB. ([ADR 0009](docs/adr/0009-event-driven-intake-and-notifications.md), [serverless/](serverless))
+* **SLOs, alerts and incidents.** Prometheus metrics incl. Postgres-derived invariants ("was any claim submitted
+  twice?"), multi-window burn-rate alerts with promtool tests, Grafana dashboards as code, Alertmanager → incidents
+  with a timeline in the Studio, a runbook per alert. ([ADR 0011](docs/adr/0011-slos-prometheus-and-incidents-in-product.md), [deploy/observability](deploy/observability))
+* **Helm chart** for clients on Kubernetes: bring-your-own Postgres/Temporal/S3, PDBs, HPA, NetworkPolicy,
+  ServiceMonitor/PrometheusRule, non-root pods; installed on kind and chaos-tested in CI. ([ADR 0010](docs/adr/0010-helm-chart-alongside-terraform.md))
+* **Design system.** Tokens in one JSON file → CSS + TS, WCAG contrast checked in CI for both themes (it caught a
+  light theme at 2.2:1), typed components, a living styleguide page. ([ADR 0012](docs/adr/0012-design-tokens-with-contrast-checks.md), [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md))
 
 ## Run it locally
 
@@ -77,6 +90,23 @@ python e2e/run_e2e.py --chaos          # drives the whole stack and checks the p
 | API docs | http://localhost:8000/docs |
 | Temporal UI | http://localhost:8233 |
 | Mock legacy portal | http://localhost:8080 (demo / demo-pass) |
+
+**With the ops stack** (Prometheus, Alertmanager, Grafana, outbox relay) and the game day:
+
+```bash
+docker compose --profile ops up --build -d     # Grafana http://localhost:3000 · Prometheus :9091 · Alertmanager :9093
+python e2e/game_day.py                         # ~20 min: portal outage + worker loss, writes e2e/results/game_day.json
+```
+
+**On Kubernetes** (kind):
+
+```bash
+kind create cluster --name portalpilot
+docker compose build api web portal
+docker tag portalpilot-api portalpilot-backend:dev; docker tag portalpilot-web portalpilot-web:dev; docker tag portalpilot-portal portalpilot-portal:dev
+for i in backend web portal; do kind load docker-image portalpilot-$i:dev --name portalpilot; done
+helm install pp deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml --wait && helm test pp
+```
 
 **With the fine-tuned Qwen tier** (WSL2 + the vLLM env from [ui_click_grpo/serving](https://github.com/snehabasker/ui_click_grpo/tree/main/serving); the merged checkpoint is built by its `serving/scripts/merge_adapter.py`):
 
@@ -114,7 +144,9 @@ you're done. The GPU tier is not provisioned: point `qwen_url` at a vLLM endpoin
 ## Engagement artifacts
 
 What a client deployment would come with: [docs/ENGAGEMENT.md](docs/ENGAGEMENT.md) (discovery questions, ROI model,
-rollout plan, runbook, risks).
+rollout plan, runbook, risks), a facilitation kit for the [design sprint, operator enablement and incident
+tabletop](docs/workshops/README.md), [architecture decision records](docs/adr/README.md), and the
+[on-call guide](docs/ops/README.md).
 
 ## Repo map
 
@@ -125,12 +157,20 @@ backend/portalpilot/
   browser/                 session manager, grounded actions + step recording
   playbooks/claims.py      the claim-filing stages
   orchestration/           Temporal workflows, activities, worker
-  api/main.py              REST + WebSocket fan-out (LISTEN/NOTIFY)
-  migrations/001_init.sql  schema
+  api/main.py              REST + WebSocket fan-out (LISTEN/NOTIFY), /metrics, incidents
+  observability.py         Prometheus metrics + Postgres-derived business gauges
+  incidents.py             Alertmanager webhook → incidents with a timeline
+  events/relay.py          transactional outbox → EventBridge
+  migrations/              schema
+serverless/                intake + notifier Lambdas (and their moto tests)
 mock_portal/               the hostile legacy portal used for testing
 frontend/                  Operator Control & Replay Studio
-infra/terraform/           AWS: VPC, ECS, RDS, ALB, S3, KMS, Secrets, alarms
-e2e/                       end-to-end run + grounding eval
+  src/design-system/       tokens.json → tokens.css/.ts, components, styleguide
+infra/terraform/           AWS: VPC, ECS, RDS, ALB, S3, KMS, Secrets, alarms; events.tf (EventBridge/SQS/Lambda)
+deploy/helm/portalpilot/   Helm chart
+deploy/observability/      Prometheus rules + tests, Alertmanager, Grafana dashboards (generated)
+e2e/                       end-to-end run, grounding eval, game day
+docs/adr/ docs/ops/ docs/workshops/
 ```
 
 Re-record the demo: `python e2e/record_demo.py` (local stack + vLLM running; writes `docs/demo/`).

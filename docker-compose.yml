@@ -4,6 +4,12 @@
 #   API docs:      http://localhost:8000/docs
 #   Temporal UI:   http://localhost:8233
 #   Mock portal:   http://localhost:8080   (user demo / demo-pass)
+#
+# With the ops stack (Prometheus, Alertmanager, Grafana, the outbox relay):
+#   docker compose --profile ops up --build -d
+#   Grafana:       http://localhost:3000   (anonymous viewer; admin / admin)
+#   Prometheus:    http://localhost:9091
+#   Alertmanager:  http://localhost:9093
 name: portalpilot
 
 x-app-env: &app-env
@@ -92,6 +98,44 @@ services:
     build: ./frontend
     depends_on: [api]
     ports: ["5173:80"]
+
+  # ------------------------------------------------------------------ ops profile
+  relay:
+    profiles: [ops]
+    build: ./backend
+    command: ["python", "-m", "portalpilot.events.relay"]
+    depends_on: [api]
+    environment:
+      <<: *app-env
+      EVENT_SINK: log          # 'eventbridge' in AWS
+
+  prometheus:
+    profiles: [ops]
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d",
+              "--web.enable-lifecycle"]
+    volumes:
+      - ./deploy/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/observability/prometheus/rules:/etc/prometheus/rules:ro
+    ports: ["9091:9090"]
+
+  alertmanager:
+    profiles: [ops]
+    image: prom/alertmanager:v0.28.1
+    volumes: [./deploy/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro]
+    ports: ["9093:9093"]
+
+  grafana:
+    profiles: [ops]
+    image: grafana/grafana:12.1.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/pp-overview.json
+    volumes:
+      - ./deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
 
 volumes:
   pgdata:

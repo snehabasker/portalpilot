@@ -1,0 +1,261 @@
+{
+ "started_at": "2026-11-06T20:40:04+00:00",
+ "scenarios": {
+  "portal_outage": {
+   "batch": "af7986a6-bbeb-448f-83b4-4327f2b9366e",
+   "incident": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+   "status": "completed",
+   "task_states": {
+    "succeeded": 8
+   }
+  },
+  "worker_loss": {
+   "batch": "00cb7424-b839-4cd0-9b40-6443eff0768d",
+   "incident": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+   "status": "completed",
+   "task_states": {
+    "succeeded": 8
+   }
+  }
+ },
+ "checks": {
+  "no reference filed twice on the portal": true,
+  "submit clicks == claims on the portal": true,
+  "double-submit suspects gauge is 0": true,
+  "every game-day task succeeded": true
+ },
+ "timeline": [
+  {
+   "t_s": 2.2,
+   "at": "2026-11-06T20:40:07+00:00",
+   "event": "A: portal starts failing (85% of page loads answer 503)"
+  },
+  {
+   "t_s": 2.6,
+   "at": "2026-11-06T20:40:07+00:00",
+   "event": "A: batch started",
+   "batch": "af7986a6-bbeb-448f-83b4-4327f2b9366e",
+   "rows": 8
+  },
+  {
+   "t_s": 108.2,
+   "at": "2026-11-06T20:41:53+00:00",
+   "event": "A: incident opened in Studio",
+   "incident": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+   "alert": "StuckTasksBurst",
+   "severity": "ticket"
+  },
+  {
+   "t_s": 108.3,
+   "at": "2026-11-06T20:41:53+00:00",
+   "event": "A: on-call acknowledged"
+  },
+  {
+   "t_s": 108.3,
+   "at": "2026-11-06T20:41:53+00:00",
+   "event": "A: diagnosis noted",
+   "stuck_tasks": 3,
+   "task_states": {
+    "waiting_human": 3,
+    "queued": 5
+   }
+  },
+  {
+   "t_s": 168.4,
+   "at": "2026-11-06T20:42:53+00:00",
+   "event": "A: portal recovered"
+  },
+  {
+   "t_s": 168.6,
+   "at": "2026-11-06T20:42:53+00:00",
+   "event": "A: operator handed stuck tasks back (retry)",
+   "released": 3
+  },
+  {
+   "t_s": 219.0,
+   "at": "2026-11-06T20:43:43+00:00",
+   "event": "A: batch completed",
+   "status": "completed",
+   "task_states": {
+    "succeeded": 8
+   }
+  },
+  {
+   "t_s": 219.1,
+   "at": "2026-11-06T20:43:43+00:00",
+   "event": "A: on-call resolved the incident"
+  },
+  {
+   "t_s": 219.1,
+   "at": "2026-11-06T20:43:43+00:00",
+   "event": "B: batch started",
+   "batch": "00cb7424-b839-4cd0-9b40-6443eff0768d",
+   "rows": 8
+  },
+  {
+   "t_s": 222.8,
+   "at": "2026-11-06T20:43:47+00:00",
+   "event": "B: worker stopped (no grace period)"
+  },
+  {
+   "t_s": 433.2,
+   "at": "2026-11-06T20:47:17+00:00",
+   "event": "B: incident opened in Studio",
+   "incident": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+   "severity": "page"
+  },
+  {
+   "t_s": 433.3,
+   "at": "2026-11-06T20:47:18+00:00",
+   "event": "B: on-call acknowledged"
+  },
+  {
+   "t_s": 435.2,
+   "at": "2026-11-06T20:47:19+00:00",
+   "event": "B: worker restarted (runbook step 2)"
+  },
+  {
+   "t_s": 475.4,
+   "at": "2026-11-06T20:48:00+00:00",
+   "event": "B: batch completed",
+   "status": "completed",
+   "task_states": {
+    "succeeded": 8
+   }
+  },
+  {
+   "t_s": 735.9,
+   "at": "2026-11-06T20:52:20+00:00",
+   "event": "B: alert stopped firing; incident auto-resolved",
+   "incident": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99"
+  },
+  {
+   "t_s": 736.6,
+   "at": "2026-11-06T20:52:21+00:00",
+   "event": "check: no reference filed twice on the portal",
+   "ok": true
+  },
+  {
+   "t_s": 736.6,
+   "at": "2026-11-06T20:52:21+00:00",
+   "event": "check: submit clicks == claims on the portal",
+   "ok": true
+  },
+  {
+   "t_s": 736.6,
+   "at": "2026-11-06T20:52:21+00:00",
+   "event": "check: double-submit suspects gauge is 0",
+   "ok": true
+  },
+  {
+   "t_s": 736.6,
+   "at": "2026-11-06T20:52:21+00:00",
+   "event": "check: every game-day task succeeded",
+   "ok": true
+  }
+ ],
+ "incidents": [
+  {
+   "incident": {
+    "id": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+    "fingerprint": "8f44bc0c6d6bbc27",
+    "alertname": "StuckTasksBurst",
+    "severity": "ticket",
+    "status": "resolved",
+    "summary": "3.625 tasks handed themselves to a human in 5 minutes",
+    "runbook_url": "docs/ops/runbooks/portal-degraded.md",
+    "labels": {
+     "severity": "ticket",
+     "alertname": "StuckTasksBurst",
+     "deployment": "local"
+    },
+    "started_at": "2026-11-06T20:41:07.194000+00:00",
+    "acknowledged_at": "2026-11-06T20:41:53.005372+00:00",
+    "acknowledged_by": "oncall",
+    "resolved_at": "2026-11-06T20:43:43.773339+00:00",
+    "created_at": "2026-11-06T20:41:52.196352+00:00"
+   },
+   "events": [
+    {
+     "id": 1,
+     "incident_id": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+     "kind": "fired",
+     "actor": "alertmanager",
+     "body": "Several tasks got stuck at once. Usually the portal is down or changed; check one screenshot first.",
+     "created_at": "2026-11-06T20:41:52.196352+00:00"
+    },
+    {
+     "id": 2,
+     "incident_id": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+     "kind": "acknowledged",
+     "actor": "operator:oncall",
+     "body": null,
+     "created_at": "2026-11-06T20:41:53.005372+00:00"
+    },
+    {
+     "id": 3,
+     "incident_id": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+     "kind": "note",
+     "actor": "operator:oncall",
+     "body": "Portal answering 503 on most loads. 3 task(s) handed to a human, task states {'waiting_human': 3, 'queued': 5}. No submits in flight. Following portal-degraded runbook: wait for portal, then hand tasks back.",
+     "created_at": "2026-11-06T20:41:53.099203+00:00"
+    },
+    {
+     "id": 4,
+     "incident_id": "0e9d33ed-2fc7-4451-b3ab-e380c7b4fddd",
+     "kind": "resolved",
+     "actor": "operator:oncall",
+     "body": "Portal healthy, all tasks filed.",
+     "created_at": "2026-11-06T20:43:43.773192+00:00"
+    }
+   ]
+  },
+  {
+   "incident": {
+    "id": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+    "fingerprint": "82e0ceb17796fefc",
+    "alertname": "NoWorkers",
+    "severity": "page",
+    "status": "resolved",
+    "summary": "No browser workers are running; claims are queued (safely) and not progressing",
+    "runbook_url": "docs/ops/runbooks/no-workers.md",
+    "labels": {
+     "severity": "page",
+     "alertname": "NoWorkers",
+     "deployment": "local"
+    },
+    "started_at": "2026-11-06T20:46:57.217000+00:00",
+    "acknowledged_at": "2026-11-06T20:47:18.002002+00:00",
+    "acknowledged_by": "oncall",
+    "resolved_at": "2026-11-06T20:47:27.217000+00:00",
+    "created_at": "2026-11-06T20:47:12.173620+00:00"
+   },
+   "events": [
+    {
+     "id": 5,
+     "incident_id": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+     "kind": "fired",
+     "actor": "alertmanager",
+     "body": "No browser workers are running; claims are queued (safely) and not progressing",
+     "created_at": "2026-11-06T20:47:12.173620+00:00"
+    },
+    {
+     "id": 6,
+     "incident_id": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+     "kind": "acknowledged",
+     "actor": "operator:oncall",
+     "body": null,
+     "created_at": "2026-11-06T20:47:18.002002+00:00"
+    },
+    {
+     "id": 7,
+     "incident_id": "6dfa86a3-d6fe-42c7-b973-e4e60f999f99",
+     "kind": "auto_resolved",
+     "actor": "alertmanager",
+     "body": "alert stopped firing",
+     "created_at": "2026-11-06T20:52:12.145279+00:00"
+    }
+   ]
+  }
+ ]
+}

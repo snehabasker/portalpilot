@@ -1,0 +1,99 @@
+{{- $fn := include "pp.fullname" . }}
+# Browser workers. Session affinity is handled by Temporal (a private task queue per pod, ADR 0004), so pods are
+# interchangeable and a lost pod costs a re-login, never a duplicate submit.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-worker
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  {{- if not .Values.worker.autoscaling.enabled }}
+  replicas: {{ .Values.worker.replicas }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "worker") | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "worker") | nindent 8 }}
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- include "pp.scrapeAnnotations" (list . 9100) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $fn }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: worker
+          image: {{ include "pp.image" (list . .Values.image.backend) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["python", "-m", "portalpilot.orchestration.worker"]
+          env:
+            {{- include "pp.appEnv" . | nindent 12 }}
+            - { name: MAX_BROWSER_SESSIONS, value: {{ .Values.worker.maxBrowserSessions | quote }} }
+            - name: WORKER_ID       # stable, readable private queue names: <pod>-<suffix>
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+          ports: [{ name: metrics, containerPort: 9100 }]
+          livenessProbe:            # the metrics server lives in the worker process
+            httpGet: { path: /metrics, port: metrics }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources: {{- toYaml .Values.worker.resources | nindent 12 }}
+          securityContext: {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - { name: shm, mountPath: /dev/shm }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: shm               # Chromium needs more shared memory than the container default
+          emptyDir: { medium: Memory, sizeLimit: {{ .Values.worker.shmSize }} }
+        - name: tmp
+          emptyDir: {}
+---
+# Headless: one DNS record per worker pod, for annotation-free Prometheus discovery and ServiceMonitor.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-worker
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  clusterIP: None
+  selector: {{- include "pp.selector" (list . "worker") | nindent 4 }}
+  ports: [{ name: metrics, port: 9100, targetPort: metrics }]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fn }}-worker
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.worker.pdb.maxUnavailable }}
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "worker") | nindent 6 }}
+{{- if .Values.worker.autoscaling.enabled }}
+---
+# CPU is a coarse proxy for browser load. The better signal is Temporal's task-queue backlog (KEDA has a Temporal
+# scaler); CPU keeps the chart free of extra operators.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $fn }}-worker
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: {{ $fn }}-worker }
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.worker.autoscaling.targetCPUUtilizationPercentage }} }
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 600 }   # don't drop browsers mid-batch on a quiet minute
+{{- end }}

@@ -12,7 +12,17 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements-dev.txt
-      - run: python -m pytest -q   # unit tests + Temporal workflow tests (time-skipping server)
+      - run: python -m pytest -q   # unit, relay/metrics and Temporal workflow tests (time-skipping server)
+
+  serverless:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: serverless } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q   # intake + notifier Lambdas against moto
 
   frontend:
     runs-on: ubuntu-latest
@@ -22,7 +32,27 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "24" }
       - run: npm ci || npm install
+      - run: npm run tokens:check   # generated tokens up to date + WCAG contrast in both themes
       - run: npm run build
+
+  observability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: promtool check + unit tests
+        run: |
+          docker run --rm -v "$PWD/deploy/observability/prometheus:/p" --entrypoint promtool prom/prometheus:v3.5.0 \
+            check rules /p/rules/slo.yml /p/rules/alerts.yml
+          docker run --rm -v "$PWD/deploy/observability/prometheus:/p" --entrypoint promtool prom/prometheus:v3.5.0 \
+            test rules /p/tests/alerts_test.yml
+      - name: alertmanager config
+        run: |
+          docker run --rm -v "$PWD/deploy/observability/alertmanager:/a" --entrypoint amtool prom/alertmanager:v0.28.1 \
+            check-config /a/alertmanager.yml
+      - name: chart copy of the rules matches the source
+        run: diff -r deploy/observability/prometheus/rules deploy/helm/portalpilot/files/rules
+      - name: dashboards are generated from code
+        run: python deploy/observability/grafana/build_dashboards.py && git diff --exit-code deploy/observability/grafana/dashboards
 
   terraform:
     runs-on: ubuntu-latest
@@ -34,6 +64,42 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false
       - run: terraform validate
+
+  helm:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v4.3.1 }
+      - name: lint + schema
+        run: |
+          helm lint deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml
+          helm template pp deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml > kind.yaml
+          helm template pp deploy/helm/portalpilot --set database.url=postgresql://x --set temporal.address=t:7233 \
+            --set config.portalUrl=https://portal --set secrets.localMasterKey=k --set ingress.enabled=true \
+            --set worker.autoscaling.enabled=true --set networkPolicy.enabled=true > prod.yaml
+          docker run --rm -v "$PWD:/k" ghcr.io/yannh/kubeconform:v0.7.0 -strict -summary /k/kind.yaml /k/prod.yaml
+      - uses: helm/kind-action@v1
+        with: { cluster_name: portalpilot }
+      - name: build and load images
+        run: |
+          docker compose build api web portal
+          docker tag portalpilot-api portalpilot-backend:dev
+          docker tag portalpilot-web portalpilot-web:dev
+          docker tag portalpilot-portal portalpilot-portal:dev
+          for i in backend web portal; do kind load docker-image portalpilot-$i:dev --name portalpilot; done
+      - name: install, smoke test
+        run: |
+          helm install pp deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml --wait --timeout 10m
+          helm test pp --timeout 3m
+      - name: chaos e2e against the cluster
+        run: |
+          kubectl port-forward svc/pp-portalpilot-api 8000:8000 & kubectl port-forward svc/pp-portalpilot-portal 8080:8080 &
+          sleep 5
+          pip install httpx && python e2e/run_e2e.py --chaos --timeout 900
+      - if: failure()
+        run: kubectl get pods -o wide && kubectl logs deploy/pp-portalpilot-worker --tail 200
 
   e2e:
     runs-on: ubuntu-latest

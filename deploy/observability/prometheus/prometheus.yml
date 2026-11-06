@@ -1,0 +1,22 @@
+# Local / docker compose scrape config. In Kubernetes the Helm chart adds prometheus.io annotations and an optional
+# ServiceMonitor instead; the rule files are shared by both.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels: { deployment: local }
+
+rule_files: ["/etc/prometheus/rules/*.yml"]
+
+alerting:
+  alertmanagers:
+    - static_configs: [{ targets: ["alertmanager:9093"] }]
+
+scrape_configs:
+  - job_name: api          # HTTP metrics + Postgres-derived business gauges
+    static_configs: [{ targets: ["api:8000"] }]
+  - job_name: worker       # stage, grounding and ledger counters (one target per worker replica)
+    dns_sd_configs: [{ names: ["worker"], type: A, port: 9100, refresh_interval: 15s }]
+  - job_name: relay
+    static_configs: [{ targets: ["relay:9100"] }]
+  - job_name: prometheus
+    static_configs: [{ targets: ["localhost:9090"] }]

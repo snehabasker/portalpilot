@@ -1,0 +1,121 @@
+# Every alert has a severity (page = wake someone up; ticket = next business hour), a summary an operator can act
+# on, and a runbook. Alertmanager posts them to the Studio's incident log (and to a pager, if the client has one).
+groups:
+  - name: correctness
+    rules:
+      - alert: DoubleSubmitSuspected
+        expr: portalpilot_double_submit_suspects > 0
+        labels: { severity: page }
+        annotations:
+          summary: "{{ $value }} claim(s) had the submit button pressed more than once"
+          description: >-
+            A submit_ledger row has clicks > 1. That is legitimate only if a reconcile proved the first click never
+            reached the portal. Check each one on the portal before doing anything else.
+          runbook_url: docs/ops/runbooks/double-submit-suspected.md
+      - alert: SubmitOutcomeUnreconciled
+        expr: portalpilot_ledger_stuck_in_flight > 0
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "{{ $value }} submit(s) in flight for over 15 minutes with no reconcile"
+          description: The agent pressed submit and nothing has established whether the claim exists on the portal.
+          runbook_url: docs/ops/runbooks/submit-outcome-unreconciled.md
+
+  - name: availability
+    rules:
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: The operator API is not answering scrapes
+          runbook_url: docs/ops/runbooks/api-down.md
+      - alert: NoWorkers
+        expr: (sum(up{job="worker"}) < 1) or absent(up{job="worker"})
+        for: 3m
+        labels: { severity: page }
+        annotations:
+          summary: No browser workers are running; claims are queued (safely) and not progressing
+          runbook_url: docs/ops/runbooks/no-workers.md
+      # Multi-window, multi-burn-rate alerts (Google SRE workbook, ch. 5) on a 99.5 % / 30 d objective.
+      - alert: ApiErrorBudgetBurnFast
+        expr: |
+          slo:api_errors:ratio_rate1h > (14.4 * (1 - 0.995))
+          and slo:api_errors:ratio_rate5m > (14.4 * (1 - 0.995))
+        labels: { severity: page }
+        annotations:
+          summary: "The API is burning its 30-day error budget 14x too fast ({{ $value | humanizePercentage }} errors)"
+          runbook_url: docs/ops/runbooks/api-errors.md
+      - alert: ApiErrorBudgetBurnSlow
+        expr: |
+          slo:api_errors:ratio_rate6h > (6 * (1 - 0.995))
+          and slo:api_errors:ratio_rate30m > (6 * (1 - 0.995))
+        labels: { severity: ticket }
+        annotations:
+          summary: "API error budget burning 6x too fast over 6 h ({{ $value | humanizePercentage }})"
+          runbook_url: docs/ops/runbooks/api-errors.md
+
+  - name: agent
+    rules:
+      - alert: PerceptionBudgetBurn
+        expr: |
+          slo:grounding_failures:ratio_rate1h > (14.4 * (1 - 0.99))
+          and slo:grounding_failures:ratio_rate5m > (14.4 * (1 - 0.99))
+        labels: { severity: ticket }
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of actions could not be grounded; humans are absorbing them"
+          description: Usually a portal layout change. Grounding is failing safe (escalating), not clicking wrongly.
+          runbook_url: docs/ops/runbooks/perception-degraded.md
+      - alert: PortalDegraded
+        expr: |
+          portalpilot:stage_retryable_errors:ratio_rate10m > 0.3
+          and on() sum(portalpilot:stage_attempts:rate10m) > 0.01
+        for: 5m
+        labels: { severity: ticket }
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of portal stage attempts are failing and being retried"
+          description: Maintenance pages, 5xx or timeouts from the client's portal. Retries back off; no work is lost.
+          runbook_url: docs/ops/runbooks/portal-degraded.md
+      # Leading signal for a portal outage (postmortem 2026-11-06, action 2): PortalDegraded is a rate that weakens
+      # once tasks park on humans, but a burst of stuck tasks is visible within a minute or two.
+      - alert: StuckTasksBurst
+        expr: sum(increase(portalpilot_interventions_opened_total{kind=~"unexpected_page|grounding_failure"}[5m])) >= 3
+        labels: { severity: ticket }
+        annotations:
+          summary: "{{ $value | humanize }} tasks handed themselves to a human in 5 minutes"
+          description: Several tasks got stuck at once. Usually the portal is down or changed; check one screenshot first.
+          runbook_url: docs/ops/runbooks/portal-degraded.md
+      - alert: TasksStalled
+        expr: portalpilot_running_task_oldest_update_seconds > 900 and on() sum(up{job="worker"}) > 0
+        for: 5m
+        labels: { severity: ticket }
+        annotations:
+          summary: A running task has not changed for 15 minutes although workers are up
+          runbook_url: docs/ops/runbooks/tasks-stalled.md
+
+  - name: humans
+    rules:
+      - alert: InterventionWaitingTooLong
+        expr: max by (kind) (portalpilot_intervention_oldest_open_seconds) > 900
+        labels: { severity: ticket }
+        annotations:
+          summary: "A {{ $labels.kind }} request has waited {{ $value | humanizeDuration }} for an operator"
+          runbook_url: docs/ops/runbooks/intervention-waiting.md
+
+  - name: plumbing
+    rules:
+      - alert: BusinessMetricsBlind
+        expr: portalpilot_business_scrape_ok == 0
+        for: 5m
+        labels: { severity: ticket }
+        annotations:
+          summary: The API cannot read Postgres for business metrics, so the correctness alerts are blind
+          runbook_url: docs/ops/runbooks/business-metrics-blind.md
+      - alert: OutboxLagging
+        expr: portalpilot_outbox_lag_events > 500
+        for: 10m
+        labels: { severity: ticket }
+        annotations:
+          summary: "{{ $value }} domain events not yet published to the event bus"
+          description: Notifications and client callbacks are delayed. Nothing is lost; the relay resumes from its cursor.
+          runbook_url: docs/ops/runbooks/outbox-lagging.md

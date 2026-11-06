@@ -1,0 +1,9 @@
+apiVersion: v2
+name: portalpilot
+description: Durable, human-supervised agent for API-less enterprise portals (API, browser workers, Studio, relay)
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+keywords: [temporal, playwright, agents, automation]
+home: https://github.com/snehabasker/portalpilot
+sources: [https://github.com/snehabasker/portalpilot]

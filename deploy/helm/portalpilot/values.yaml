@@ -1,0 +1,129 @@
+# PortalPilot on Kubernetes. ADR 0010 explains why there is a Helm chart next to the ECS Terraform: some clients run
+# everything on their own cluster, and an FDE deploys into what the client already operates.
+#
+# Production shape: bring your own Postgres, Temporal (or Temporal Cloud) and S3; the bundled ones are for dev/CI.
+#   helm install pp deploy/helm/portalpilot -f my-values.yaml
+# Local kind cluster with everything bundled:
+#   helm install pp deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml
+
+image:
+  registry: ghcr.io/snehabasker
+  tag: ""                   # defaults to .Chart.AppVersion
+  pullPolicy: IfNotPresent
+  backend: portalpilot-backend   # one image: api, worker and relay entrypoints
+  web: portalpilot-web
+  portal: portalpilot-portal
+imagePullSecrets: []
+
+# ------------------------------------------------------------------ secrets
+# Either name an existing Secret with keys DATABASE_URL, OPERATOR_TOKEN, LOCAL_MASTER_KEY (and optionally
+# ANTHROPIC_API_KEY), or let the chart create one from the values below (dev only: values end up in Helm history).
+existingSecret: ""
+secrets:
+  operatorToken: ""         # generated (and kept across upgrades) when empty
+  localMasterKey: ""        # Fernet key; required when vault.keyProvider=local and no existingSecret
+  anthropicApiKey: ""
+
+# ------------------------------------------------------------------ app config
+config:
+  grounderChain: cache,dom  # cache,qwen,claude in production
+  qwenUrl: ""
+  portalUrl: ""             # the client's portal; defaults to the bundled mock portal when portal.enabled
+  temporalNamespace: default
+  taskQueue: portalpilot
+
+vault:
+  keyProvider: local        # local | kms
+  kmsKeyId: ""
+
+database:
+  url: ""                   # postgresql://user:pass@host:5432/db (ignored when postgres.enabled)
+
+temporal:
+  address: ""               # host:7233 or Temporal Cloud (ignored when temporal.enabled)
+  enabled: false            # bundled temporalio/auto-setup, dev only
+  image: temporalio/auto-setup:1.29.1
+  resources: { requests: { cpu: 200m, memory: 512Mi } }
+
+s3:
+  bucket: portalpilot-screens
+  endpoint: ""              # empty = AWS S3 (use IRSA / pod identity for credentials)
+  region: us-east-1
+  mock:
+    enabled: false          # bundled adobe/s3mock, dev only
+    image: adobe/s3mock:4.0.0
+
+postgres:
+  enabled: false            # bundled single-replica Postgres, dev only
+  image: postgres:16-alpine
+  password: portalpilot
+  storage: 2Gi
+
+# ------------------------------------------------------------------ components
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { memory: 1Gi }
+  pdb: { minAvailable: 1 }
+
+worker:
+  replicas: 2
+  maxBrowserSessions: 3
+  # Browser activities finish their current action; anything cut off is recovered by the workflow (ADR 0004).
+  terminationGracePeriodSeconds: 75
+  shmSize: 1Gi
+  resources:
+    requests: { cpu: "1", memory: 2Gi }
+    limits: { memory: 3Gi }
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  pdb: { maxUnavailable: 1 }
+
+web:
+  replicas: 1
+  resources: { requests: { cpu: 50m, memory: 64Mi } }
+
+relay:
+  enabled: true
+  eventSink: log            # log | eventbridge (needs AWS credentials for events:PutEvents)
+  eventBusName: portalpilot
+
+portal:
+  enabled: false            # the mock legacy portal, for demos and e2e tests
+
+serviceAccount:
+  create: true
+  annotations: {}           # e.g. eks.amazonaws.com/role-arn for S3 / KMS / EventBridge
+
+# ------------------------------------------------------------------ edge
+ingress:
+  enabled: false
+  className: ""
+  host: portalpilot.example.com
+  annotations: {}
+  tls: []
+
+# ------------------------------------------------------------------ observability
+metrics:
+  podAnnotations: true      # prometheus.io/scrape annotations for annotation-based scrapers
+  serviceMonitor:
+    enabled: false          # needs the Prometheus Operator CRDs
+    interval: 15s
+  prometheusRule:
+    enabled: false          # the same SLO + alert rules as deploy/observability/prometheus/rules
+
+networkPolicy:
+  enabled: false            # default-deny ingress except the paths the app uses
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+  seccompProfile: { type: RuntimeDefault }
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities: { drop: [ALL] }

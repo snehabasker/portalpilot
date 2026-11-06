@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Batch, type Mapping, type PreviewRow } from "../api";
 import { useLive } from "../useLive";
-import { ago, money, Progress, Status } from "../components/bits";
+import { ago, money, Status } from "../components/bits";
+import { Progress } from "../design-system";
 
 export default function Batches() {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -23,9 +24,9 @@ export default function Batches() {
                 <td>{b.name}<div className="muted mono">{b.source_filename}</div></td>
                 <td><Status s={b.status} /></td>
                 <td>
-                  <Progress parts={[
-                    { n: b.succeeded, color: "var(--ok)" }, { n: b.waiting, color: "var(--warn)" },
-                    { n: b.active, color: "var(--accent)" }, { n: b.failed + b.invalid, color: "var(--bad)" },
+                  <Progress label="Batch progress" parts={[
+                    { n: b.succeeded, tone: "ok", label: "done" }, { n: b.waiting, tone: "warn", label: "waiting" },
+                    { n: b.active, tone: "accent", label: "running" }, { n: b.failed + b.invalid, tone: "bad", label: "failed or invalid" },
                   ]} />
                   <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                     {b.succeeded} done · {b.active} running · {b.waiting} waiting · {b.failed} failed · {b.invalid} invalid

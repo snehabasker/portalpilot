@@ -1,0 +1,26 @@
+# Everything bundled, images loaded into kind (no registry). Used by CI and for local testing:
+#   kind create cluster --name portalpilot
+#   docker compose build && for i in backend web portal; do kind load docker-image portalpilot-$i:dev --name portalpilot; done
+#   helm install pp deploy/helm/portalpilot -f deploy/helm/portalpilot/values-kind.yaml --wait
+image:
+  registry: ""
+  tag: dev
+  pullPolicy: Never
+
+secrets:
+  operatorToken: dev-operator-token
+  localMasterKey: NcZK99xkbNThwGmjFqbrAivVZXwd85zTkw2C8nCMxUs=
+
+postgres: { enabled: true }
+temporal: { enabled: true }
+s3:
+  mock: { enabled: true }
+portal: { enabled: true }
+
+api:
+  replicas: 1
+  resources: { requests: { cpu: 100m, memory: 256Mi } }
+worker:
+  replicas: 1
+  resources: { requests: { cpu: 500m, memory: 1Gi } }
+networkPolicy: { enabled: true }

@@ -1,8 +1,9 @@
 terraform {
   required_version = ">= 1.9"
   required_providers {
-    aws    = { source = "hashicorp/aws", version = "~> 6.71" }
-    random = { source = "hashicorp/random", version = "~> 3.9" }
+    aws     = { source = "hashicorp/aws", version = "~> 6.71" }
+    random  = { source = "hashicorp/random", version = "~> 3.9" }
+    archive = { source = "hashicorp/archive", version = "~> 2.7" }
   }
   # Remote state for real client deployments (one state per client):
   # backend "s3" {

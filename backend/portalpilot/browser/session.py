@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
 from ..config import settings
+from ..observability import BROWSER_SESSIONS
 
 
 class SessionLost(Exception):
@@ -35,6 +36,7 @@ class SessionManager:
         self._browser: Browser | None = None
         self._sessions: dict[str, _Session] = {}
         self._lock = asyncio.Lock()
+        BROWSER_SESSIONS.set_function(lambda: len(self._sessions))
 
     async def start(self) -> None:
         self._pw = await async_playwright().start()

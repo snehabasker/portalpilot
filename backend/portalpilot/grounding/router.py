@@ -16,6 +16,7 @@ import time
 
 from .. import db
 from ..config import settings
+from ..observability import GROUNDING_ATTEMPTS, GROUNDING_COST, GROUNDING_FAILED, GROUNDING_SECONDS
 from .base import Grounder, Grounding, GroundingFailed, Observation, Target, TierAttempt
 from .verify import verify
 
@@ -105,4 +106,15 @@ class GroundingRouter:
                 log.warning("grounder %s failed: %s", tier, e)
             finally:
                 att.latency_ms = round((time.perf_counter() - t0) * 1000)
+                _observe(att)
+        GROUNDING_FAILED.inc()
         raise GroundingFailed(target, trace)
+
+
+def _observe(att: TierAttempt) -> None:
+    result = ("error" if (att.reason or "").startswith("error:") else "miss" if not att.found
+              else "verified" if att.verified else "rejected")
+    GROUNDING_ATTEMPTS.labels(att.tier, result).inc()
+    GROUNDING_SECONDS.labels(att.tier).observe(att.latency_ms / 1000)
+    if att.cost_usd:
+        GROUNDING_COST.labels(att.tier).inc(att.cost_usd)

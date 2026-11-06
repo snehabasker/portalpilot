@@ -1,0 +1,94 @@
+/* Design-system component styles. Only semantic tokens (var(--color-*), --space-*, --radius-*) appear here. */
+
+/* ---------- tone helpers: text color for a semantic tone ---------- */
+.ds-tone--neutral { color: var(--color-text-muted); }
+.ds-tone--accent { color: var(--color-accent); }
+.ds-tone--ok { color: var(--color-ok); }
+.ds-tone--warn { color: var(--color-warn); }
+.ds-tone--bad { color: var(--color-bad); }
+.ds-tone--operator { color: var(--color-operator); }
+.ds-muted { color: var(--color-text-muted); }
+.ds-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+
+/* ---------- button ---------- */
+.ds-btn {
+  font: inherit; color: var(--color-text); background: var(--color-surface-2); border: 1px solid var(--color-line);
+  border-radius: var(--radius-md); padding: 6px 12px; cursor: pointer;
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+.ds-btn:hover:not(:disabled) { border-color: var(--color-accent); }
+.ds-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.ds-btn:disabled { opacity: .45; cursor: default; }
+.ds-btn--sm { padding: 2px 8px; font-size: var(--font-size-sm); }
+.ds-btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); font-weight: 600; }
+.ds-btn--danger { border-color: var(--color-bad); color: var(--color-bad); }
+.ds-btn--ok { border-color: var(--color-ok); color: var(--color-ok); }
+.ds-btn--ghost { background: transparent; border-color: transparent; }
+
+/* ---------- chips and badges ---------- */
+.ds-chip {
+  display: inline-block; padding: 1px 8px; border-radius: var(--radius-pill); font-size: var(--font-size-sm);
+  font-weight: 600; border: 1px solid currentColor; white-space: nowrap;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+.ds-tier {
+  display: inline-block; padding: 0 6px; border-radius: var(--radius-sm); font-size: var(--font-size-xs);
+  font-weight: 700; color: var(--color-on-tier);
+}
+.ds-tier--cache { background: var(--color-tier-cache); }
+.ds-tier--qwen { background: var(--color-tier-qwen); }
+.ds-tier--claude { background: var(--color-tier-claude); }
+.ds-tier--dom { background: var(--color-tier-dom); }
+.ds-tier--operator { background: var(--color-operator); color: var(--color-surface); }
+.ds-tier--none { background: var(--color-line); color: var(--color-text-muted); }
+.ds-live { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.ds-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-bad); }
+.ds-live--on i { background: var(--color-ok); box-shadow: 0 0 6px var(--color-ok); }
+
+/* ---------- containers ---------- */
+.ds-card {
+  display: block; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg);
+  padding: 14px; color: inherit;
+}
+a.ds-card:hover { border-color: var(--color-accent); }
+.ds-card--warn { border-left: 3px solid var(--color-warn); background: color-mix(in srgb, var(--color-warn) 8%, var(--color-surface)); }
+.ds-card--bad { border-left: 3px solid var(--color-bad); background: color-mix(in srgb, var(--color-bad) 8%, var(--color-surface)); }
+.ds-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-3); }
+.ds-stat__label, .ds-stat__hint { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.ds-stat__value { font-size: var(--font-size-stat); font-weight: 700; }
+.ds-page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); flex-wrap: wrap; margin-bottom: 14px; }
+.ds-page-header h1 { margin: 0; }
+.ds-page-header p { margin: 4px 0 0; }
+.ds-empty { border: 1px dashed var(--color-line); border-radius: var(--radius-lg); padding: var(--space-6); text-align: center; display: grid; gap: 4px; }
+.ds-kv { display: grid; gap: 4px; margin: 0; font-size: 13px; }
+.ds-kv__row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
+.ds-kv dt { color: var(--color-text-muted); }
+.ds-kv dd { margin: 0; overflow-wrap: anywhere; }
+
+/* ---------- data ---------- */
+.ds-progress { height: 6px; background: var(--color-surface-2); border-radius: 3px; overflow: hidden; display: flex; }
+.ds-progress span { display: block; height: 100%; }
+.ds-fill--neutral { background: var(--color-text-muted); } .ds-fill--accent { background: var(--color-accent); }
+.ds-fill--ok { background: var(--color-ok); } .ds-fill--warn { background: var(--color-warn); }
+.ds-fill--bad { background: var(--color-bad); } .ds-fill--operator { background: var(--color-operator); }
+.ds-fill--cache { background: var(--color-tier-cache); } .ds-fill--qwen { background: var(--color-tier-qwen); }
+.ds-fill--claude { background: var(--color-tier-claude); } .ds-fill--dom { background: var(--color-tier-dom); }
+
+.ds-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.ds-timeline li { display: grid; grid-template-columns: 80px 1fr; gap: var(--space-3); padding: 8px 0 8px 14px; border-left: 2px solid currentColor; position: relative; }
+.ds-timeline li::before { content: ""; position: absolute; left: -6px; top: 13px; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.ds-timeline time { color: var(--color-text-muted); font-family: var(--font-mono); font-size: var(--font-size-sm); }
+.ds-timeline__title { color: var(--color-text); font-weight: 600; }
+
+/* ---------- forms ---------- */
+.ds-field { display: grid; gap: 4px; }
+.ds-field__label { font-size: var(--font-size-sm); color: var(--color-text-muted); font-weight: 500; }
+.ds-field__hint { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.ds-field input, .ds-field select, .ds-field textarea { width: 100%; }
+
+/* ---------- styleguide page ---------- */
+.ds-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2); }
+.ds-swatch { border: 1px solid var(--color-line); border-radius: var(--radius-md); overflow: hidden; font-size: var(--font-size-sm); }
+.ds-swatch > div:first-child { height: 44px; }
+.ds-swatch > div:last-child { padding: 6px 8px; display: grid; }
+@media (prefers-reduced-motion: reduce) { .ds-btn { transition: none; } }

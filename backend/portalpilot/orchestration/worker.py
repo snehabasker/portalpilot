@@ -6,6 +6,7 @@ import asyncio
 import logging
 import signal
 
+from prometheus_client import start_http_server
 from temporalio.client import Client
 from temporalio.worker import Worker
 
@@ -33,6 +34,7 @@ async def connect_temporal(retries: int = 60) -> Client:
 async def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     s = settings()
+    start_http_server(s.metrics_port)  # Prometheus scrape target for this worker's counters
     await db.migrate()
     await asyncio.to_thread(storage.ensure_bucket)
     client = await connect_temporal()
