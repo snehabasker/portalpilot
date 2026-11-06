@@ -1,0 +1,57 @@
+# Service level objectives, as recording rules. The alerts in alerts.yml burn against these.
+#
+#   SLO                 objective  SLI
+#   API availability    99.5 %     non-5xx share of operator API requests (30 d)
+#   Perception          99 %       share of agent actions that some grounding tier could verify (30 d). A miss is
+#                                  not a wrong click (the verifier stops those), but it costs a human's time, and
+#                                  saving that time is what the client pays for.
+#   Human response      90 %       interventions answered within 15 min in business hours (dashboard; the alert is
+#                                  on the oldest open one)
+#   Correctness         100 %      no claim filed twice. Not a budget: any suspect pages.
+groups:
+  - name: slo:api
+    rules:
+      - record: slo:api_errors:ratio_rate5m
+        expr: |
+          sum(rate(portalpilot_http_requests_total{code=~"5.."}[5m]))
+            / clamp_min(sum(rate(portalpilot_http_requests_total[5m])), 1e-9)
+      - record: slo:api_errors:ratio_rate30m
+        expr: |
+          sum(rate(portalpilot_http_requests_total{code=~"5.."}[30m]))
+            / clamp_min(sum(rate(portalpilot_http_requests_total[30m])), 1e-9)
+      - record: slo:api_errors:ratio_rate1h
+        expr: |
+          sum(rate(portalpilot_http_requests_total{code=~"5.."}[1h]))
+            / clamp_min(sum(rate(portalpilot_http_requests_total[1h])), 1e-9)
+      - record: slo:api_errors:ratio_rate6h
+        expr: |
+          sum(rate(portalpilot_http_requests_total{code=~"5.."}[6h]))
+            / clamp_min(sum(rate(portalpilot_http_requests_total[6h])), 1e-9)
+
+  - name: slo:perception
+    rules:
+      # an action is grounded when one attempt verified, and failed when every tier gave up
+      - record: slo:grounding_failures:ratio_rate5m
+        expr: |
+          sum(rate(portalpilot_grounding_failed_total[5m]))
+            / clamp_min(sum(rate(portalpilot_grounding_attempts_total{result="verified"}[5m]))
+                        + sum(rate(portalpilot_grounding_failed_total[5m])), 1e-9)
+      - record: slo:grounding_failures:ratio_rate1h
+        expr: |
+          sum(rate(portalpilot_grounding_failed_total[1h]))
+            / clamp_min(sum(rate(portalpilot_grounding_attempts_total{result="verified"}[1h]))
+                        + sum(rate(portalpilot_grounding_failed_total[1h])), 1e-9)
+
+  - name: portalpilot:derived
+    rules:
+      - record: portalpilot:stage_attempts:rate10m
+        expr: sum by (stage, outcome) (rate(portalpilot_stage_duration_seconds_count[10m]))
+      - record: portalpilot:stage_retryable_errors:ratio_rate10m
+        expr: |
+          sum(rate(portalpilot_stage_duration_seconds_count{outcome="retryable_error"}[10m]))
+            / clamp_min(sum(rate(portalpilot_stage_duration_seconds_count[10m])), 1e-9)
+      - record: portalpilot:grounding_tier_share:rate1h
+        expr: |
+          sum by (tier) (rate(portalpilot_grounding_attempts_total{result="verified"}[1h]))
+            / ignoring(tier) group_left
+          clamp_min(sum(rate(portalpilot_grounding_attempts_total{result="verified"}[1h])), 1e-9)

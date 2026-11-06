@@ -1,0 +1,17 @@
+PortalPilot {{ .Chart.AppVersion }} is installed as "{{ .Release.Name }}".
+
+Studio:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "pp.fullname" . }}-web 5173:80
+  open http://localhost:5173
+{{- if not .Values.existingSecret }}
+
+Operator token:
+  kubectl -n {{ .Release.Namespace }} get secret {{ include "pp.fullname" . }}-app -o jsonpath='{.data.OPERATOR_TOKEN}' | base64 -d
+{{- end }}
+
+Smoke test:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if or .Values.postgres.enabled .Values.temporal.enabled .Values.s3.mock.enabled }}
+
+WARNING: bundled Postgres / Temporal / S3 mock are for development. Use managed services in production.
+{{- end }}

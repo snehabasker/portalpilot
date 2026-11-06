@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 
 from playwright.async_api import TimeoutError as PWTimeout
@@ -18,6 +19,7 @@ from ..browser.agent import Agent, PortalUnavailable
 from ..browser.session import SessionLost, SessionManager
 from ..config import settings
 from ..grounding import GroundingFailed, GroundingRouter
+from ..observability import INTERVENTIONS_OPENED, LEDGER_TRANSITIONS, STAGE_SECONDS, SUBMIT_CLICKS, TASKS_FINISHED
 from ..playbooks import claims
 from .shared import (InterventionRequest, LedgerOp, OperatorAction, SessionInfo, StageRequest, StageResult,
                      TaskContext, TaskUpdate)
@@ -58,6 +60,8 @@ class DbActivities:
                       completed_at = CASE WHEN $7::boolean THEN now() ELSE completed_at END
                WHERE id = $1""",
             u.task_id, u.status, u.stage, u.error, u.confirmation_no, u.attempts_inc, u.final)
+        if u.final and u.status and activity.info().attempt == 1:
+            TASKS_FINISHED.labels(u.status).inc()
         await db.publish("task.updated", {k: v for k, v in u.__dict__.items() if v not in (None, 0, False)},
                          task_id=u.task_id)
 
@@ -93,6 +97,7 @@ class DbActivities:
                 return cur  # replayed activity: already applied
             raise ApplicationError(f"illegal ledger transition {cur} -> {op.op}", non_retryable=True, type="LedgerViolation")
         await db.audit("system", f"ledger.{op.op}", "task", op.task_id, {"confirmation_no": op.confirmation_no})
+        LEDGER_TRANSITIONS.labels(op.op).inc()
         return row["state"]
 
     @activity.defn
@@ -112,6 +117,7 @@ class DbActivities:
             """INSERT INTO interventions (task_id, kind, stage, prompt, screenshot, context, expires_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
             req.task_id, req.kind, req.stage, req.prompt, req.screenshot, req.context, expires)
+        INTERVENTIONS_OPENED.labels(req.kind).inc()
         await p.execute("UPDATE tasks SET status = 'waiting_human' WHERE id = $1", req.task_id)
         await db.publish("intervention.opened", {"intervention_id": str(iid), "kind": req.kind, "prompt": req.prompt,
                                                  "stage": req.stage}, task_id=req.task_id)
@@ -168,6 +174,20 @@ class BrowserActivities:
 
     @activity.defn
     async def run_stage(self, req: StageRequest) -> StageResult:
+        t0, outcome = time.perf_counter(), "fatal_error"
+        try:
+            res = await self._run_stage(req)
+            outcome = "needs_human" if res.outcome == "needs_input" else "ok"
+            return res
+        except ApplicationError:  # typed, non-retryable: the workflow decides what happens next
+            raise
+        except Exception:
+            outcome = "retryable_error"
+            raise
+        finally:
+            STAGE_SECONDS.labels(req.stage, outcome).observe(time.perf_counter() - t0)
+
+    async def _run_stage(self, req: StageRequest) -> StageResult:
         attempt = activity.info().attempt
         try:
             page = self.sessions.page(req.session_id)
@@ -242,4 +262,5 @@ async def _arm_submit(task_id: str) -> None:
         state = await p.fetchval("SELECT state FROM submit_ledger WHERE task_id = $1", task_id)
         raise ApplicationError(f"submit not armed (ledger state {state}); refusing to click", type="LedgerViolation",
                                non_retryable=True)
+    SUBMIT_CLICKS.inc()
     await db.audit(f"worker:{settings().worker_id}", "submit.armed", "task", task_id, {"click_number": ok})

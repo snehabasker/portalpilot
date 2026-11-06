@@ -61,6 +61,9 @@ estimate it).
 
 ## 5. Runbook (operators)
 
+Day-to-day operator actions are below. For alerts, severities, on-call and incident response see
+[docs/ops](ops/README.md) (one runbook per alert); the [workshops](workshops/README.md) train both.
+
 | Situation | What you see | What to do |
 |---|---|---|
 | MFA prompt | "Needs attention: mfa code" | enter the code from the service phone; it is sealed and used once |

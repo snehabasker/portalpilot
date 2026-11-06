@@ -1,0 +1,121 @@
+{{- $fn := include "pp.fullname" . }}
+{{- /* Bundled dependencies for dev clusters and CI. Production points at managed Postgres, Temporal Cloud and S3. */}}
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fn }}-postgres
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  serviceName: {{ $fn }}-postgres
+  replicas: 1
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "postgres") | nindent 8 }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          env:
+            - { name: POSTGRES_USER, value: portalpilot }
+            - { name: POSTGRES_PASSWORD, value: {{ .Values.postgres.password | quote }} }
+            - { name: POSTGRES_DB, value: portalpilot }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          ports: [{ name: pg, containerPort: 5432 }]
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "portalpilot"] }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: {{ .Values.postgres.storage }} } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-postgres
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "pp.selector" (list . "postgres") | nindent 4 }}
+  ports: [{ name: pg, port: 5432, targetPort: pg }]
+{{- end }}
+{{- if .Values.temporal.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-temporal
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: temporal
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "temporal") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "temporal") | nindent 8 }}
+    spec:
+      containers:
+        - name: temporal
+          image: {{ .Values.temporal.image }}
+          env:
+            - { name: DB, value: postgres12 }
+            - { name: DB_PORT, value: "5432" }
+            - { name: POSTGRES_USER, value: portalpilot }
+            - { name: POSTGRES_PWD, value: {{ .Values.postgres.password | quote }} }
+            - { name: POSTGRES_SEEDS, value: {{ $fn }}-postgres }
+            - { name: BIND_ON_IP, value: 0.0.0.0 }
+            - name: TEMPORAL_BROADCAST_ADDRESS
+              valueFrom: { fieldRef: { fieldPath: status.podIP } }
+          ports: [{ name: grpc, containerPort: 7233 }]
+          readinessProbe:
+            tcpSocket: { port: grpc }
+            periodSeconds: 5
+          resources: {{- toYaml .Values.temporal.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-temporal
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "pp.selector" (list . "temporal") | nindent 4 }}
+  ports: [{ name: grpc, port: 7233, targetPort: grpc }]
+{{- end }}
+{{- if .Values.s3.mock.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-s3
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: s3
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "s3") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "s3") | nindent 8 }}
+    spec:
+      containers:
+        - name: s3
+          image: {{ .Values.s3.mock.image }}
+          env:
+            - { name: COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS, value: {{ .Values.s3.bucket | quote }} }
+          ports: [{ name: http, containerPort: 9090 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-s3
+  labels: {{- include "pp.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "pp.selector" (list . "s3") | nindent 4 }}
+  ports: [{ name: http, port: 9090, targetPort: http }]
+{{- end }}

@@ -9,7 +9,8 @@ CSV into a legacy provider portal. It is built for the three things that go wron
 
 Contents: [1. System architecture](#1-system-architecture) · [2. PostgreSQL schema](#2-postgresql-schema) ·
 [3. Temporal workflow design](#3-temporal-workflow-design) · [4. Operator Control & Replay Studio](#4-operator-control--replay-studio) ·
-[5. AWS deployment](#5-aws-deployment) · [6. Measured results](#6-measured-results)
+[5. AWS deployment](#5-aws-deployment) · [6. Measured results](#6-measured-results) ·
+[7. Events, operations and Kubernetes](#7-events-operations-and-kubernetes)
 
 ---
 
@@ -255,3 +256,67 @@ The cache and DOM tiers were used there, since that stack has no GPU.
 
 Not measured here: the Claude tier live (wired and unit-tested; it needs an API key and spends money), and Qwen on AWS
 (needs a GPU endpoint).
+
+---
+
+## 7. Events, operations and Kubernetes
+
+Added 2026-11-06. Decisions: [ADR 0009](adr/0009-event-driven-intake-and-notifications.md) (events),
+[0010](adr/0010-helm-chart-alongside-terraform.md) (Helm), [0011](adr/0011-slos-prometheus-and-incidents-in-product.md)
+(SLOs and incidents), [0012](adr/0012-design-tokens-with-contrast-checks.md) (design system).
+
+```mermaid
+flowchart LR
+  subgraph AWS serverless
+    S3I[(S3 intake<br/>incoming/*.csv)] -- Object Created --> EB0{{default bus rule}} --> Q[[SQS + DLQ]] --> LI[λ intake]
+    BUS{{custom bus<br/>+ 7-day archive}} -- rule: intervention.opened,<br/>incident.opened, task.failed,<br/>batch.finished --> LN[λ notifier] --> CHAT[Slack / Teams]
+    LN --- DDB[(DynamoDB<br/>dedupe)]
+  end
+  LI -- POST /api/batches<br/>source_ref = s3://…#etag --> API[API]
+  API --> PG[(Postgres<br/>task_events = outbox)]
+  W[workers] --> PG
+  PG --> RL[outbox relay<br/>advisory-locked] -- PutEvents --> BUS
+  subgraph Observability
+    PR[Prometheus<br/>SLO + alert rules] --> AM[Alertmanager]
+  end
+  API -. /metrics + business gauges .-> PR
+  W -. :9100 .-> PR
+  AM -- webhook --> API
+  API -- incidents + timeline --> PG
+```
+
+**Inbound.** A CSV under `incoming/` in the intake bucket becomes a batch with no human upload. SQS sits between
+EventBridge and the Lambda to absorb bursts, retry per message and dead-letter after 3 receives. The function reports
+partial batch failures. `batches.source_ref` (unique per tenant) makes redelivery idempotent, and a redelivery also
+starts a batch whose first attempt died before starting its workflow. A 4xx from the API is written back as
+`rejected/<file>.error.json` and is not retried.
+
+**Outbound.** `task_events` doubles as an outbox. The relay maps a small public set of event types, publishes them in
+id order in chunks of 10 (stopping at the first rejected entry so ordering survives a retry), and advances
+`outbox_cursor`. Delivery is at-least-once end to end, so consumers dedupe on `event_id` (the notifier uses a
+DynamoDB conditional put and releases the claim if the webhook call fails).
+
+**Metrics.** Counters and histograms per process (stage outcomes and durations, grounding attempts by tier and
+verdict, ledger transitions, HTTP), plus gauges the API reads from Postgres at scrape time: task states, open
+interventions and their age, **double-submit suspects** (ledger rows with more than one click), submits stuck in
+flight, and outbox lag. Labels are bounded (stage, tier and route *templates*, never ids).
+
+**SLOs and alerts.** API availability 99.5 % and perception 99 %, with multi-window burn-rate alerts. Invariant
+alerts page on any non-zero value. Rules are unit-tested with promtool, and the Helm chart ships the same files as
+a `PrometheusRule`. Grafana dashboards are generated from Python: an on-call overview and agent internals.
+
+**Incidents.** Alertmanager posts to `/api/incidents/alertmanager`. There is one open incident per alert
+fingerprint, with a timeline of fired, acknowledged, notes, resolved and auto-resolved events. Operators work it
+in the Studio's Incidents page, and each change is also a domain event, so `incident.opened` reaches chat through
+the notifier. Runbooks: [docs/ops](ops/README.md).
+
+**Kubernetes.** The Helm chart runs the application tier against bring-your-own Postgres, Temporal and S3 (bundled
+dev versions for kind/CI). Workers get a memory-backed `/dev/shm`, a 75 s grace period, a PDB, and optional HPA. All
+pods are non-root with capabilities dropped. NetworkPolicy, ServiceMonitor, PrometheusRule and Ingress are opt-in.
+
+**Game day** ([postmortem](ops/postmortems/2026-11-06-game-day.md)). A portal outage (85 % 503s) and a worker
+SIGKILL, injected into the full stack: both detected, opened as incidents, acknowledged and resolved; 14 claims for
+14 clicks. It found that tasks waiting on a human hold the batch's concurrency slots
+([ADR 0013](adr/0013-human-waits-do-not-hold-concurrency.md)), and that the outage alert lagged the stuck tasks by
+about 5 minutes. The new `StuckTasksBurst` alert, plus a fix for lazily created counters, cut detection to 1 min 47 s
+in the verification run (16 of 16 tasks, 16 claims for 16 clicks).

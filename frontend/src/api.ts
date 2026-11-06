@@ -98,7 +98,21 @@ export const api = {
   resolve: (iid: string, b: { approved?: boolean; value?: string; note?: string }) =>
     req(`/interventions/${iid}/resolve`, { method: "POST", body: JSON.stringify(b) }),
   metrics: () => req<Metrics>("/metrics"),
+  incidents: (status?: "open") => req<Incident[]>(status ? `/incidents?status=${status}` : "/incidents"),
+  incident: (id: string) => req<{ incident: Incident; events: IncidentEvent[] }>(`/incidents/${id}`),
+  ackIncident: (id: string) => req(`/incidents/${id}/ack`, { method: "POST" }),
+  noteIncident: (id: string, body: string) =>
+    req(`/incidents/${id}/notes`, { method: "POST", body: JSON.stringify({ body }) }),
+  resolveIncident: (id: string, body: string) =>
+    req(`/incidents/${id}/resolve`, { method: "POST", body: JSON.stringify({ body }) }),
 };
+
+export interface Incident {
+  id: string; alertname: string; severity: "page" | "ticket"; status: "firing" | "acknowledged" | "resolved";
+  summary: string; runbook_url: string | null; labels: Record<string, string>; started_at: string;
+  acknowledged_at: string | null; acknowledged_by: string | null; resolved_at: string | null; created_at: string;
+}
+export interface IncidentEvent { id: number; kind: string; actor: string; body: string | null; created_at: string }
 
 export interface Metrics {
   grounders: { grounder: string; steps: number; avg_ms: number; p95_ms: number; cost_usd: number }[];

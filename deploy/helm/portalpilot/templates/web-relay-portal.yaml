@@ -1,0 +1,119 @@
+{{- $fn := include "pp.fullname" . }}
+# ------------------------------------------------------------------ web (Studio static files + /api proxy)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-web
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "web") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "web") | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: web
+          image: {{ include "pp.image" (list . .Values.image.web) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - { name: API_UPSTREAM, value: "{{ $fn }}-api:8000" }
+          ports: [{ name: http, containerPort: 80 }]
+          readinessProbe:
+            httpGet: { path: /, port: http }
+          resources: {{- toYaml .Values.web.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-web
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  selector: {{- include "pp.selector" (list . "web") | nindent 4 }}
+  ports: [{ name: http, port: 80, targetPort: http }]
+{{- if .Values.relay.enabled }}
+---
+# ------------------------------------------------------------------ outbox relay (single active via advisory lock)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-relay
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "relay") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "relay") | nindent 8 }}
+      annotations:
+        {{- include "pp.scrapeAnnotations" (list . 9100) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $fn }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: relay
+          image: {{ include "pp.image" (list . .Values.image.backend) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["python", "-m", "portalpilot.events.relay"]
+          env:
+            {{- include "pp.appEnv" . | nindent 12 }}
+            - { name: EVENT_SINK, value: {{ .Values.relay.eventSink | quote }} }
+            - { name: EVENT_BUS_NAME, value: {{ .Values.relay.eventBusName | quote }} }
+          ports: [{ name: metrics, containerPort: 9100 }]
+          resources: { requests: { cpu: 50m, memory: 128Mi } }
+          securityContext: {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-relay
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: relay
+spec:
+  selector: {{- include "pp.selector" (list . "relay") | nindent 4 }}
+  ports: [{ name: metrics, port: 9100, targetPort: metrics }]
+{{- end }}
+{{- if .Values.portal.enabled }}
+---
+# ------------------------------------------------------------------ mock legacy portal (demo / e2e only)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fn }}-portal
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: portal
+spec:
+  replicas: 1   # in-memory state
+  selector:
+    matchLabels: {{- include "pp.selector" (list . "portal") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "pp.selector" (list . "portal") | nindent 8 }}
+    spec:
+      containers:
+        - name: portal
+          image: {{ include "pp.image" (list . .Values.image.portal) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [{ name: http, containerPort: 8080 }]
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fn }}-portal
+  labels: {{- include "pp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: portal
+spec:
+  selector: {{- include "pp.selector" (list . "portal") | nindent 4 }}
+  ports: [{ name: http, port: 8080, targetPort: http }]
+{{- end }}

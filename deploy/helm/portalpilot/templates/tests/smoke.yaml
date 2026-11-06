@@ -1,0 +1,30 @@
+{{- $fn := include "pp.fullname" . }}
+# helm test: the API is healthy (so Postgres and migrations are fine), metrics are exported, and the business
+# collector can read Postgres.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $fn }}-smoke
+  labels: {{- include "pp.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext: {{- toYaml .Values.podSecurityContext | nindent 4 }}
+  containers:
+    - name: smoke
+      image: {{ include "pp.image" (list . .Values.image.backend) }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      securityContext: {{- toYaml .Values.containerSecurityContext | nindent 8 }}
+      command:
+        - python
+        - -c
+        - |
+          import urllib.request as u
+          base = "http://{{ $fn }}-api:8000"
+          assert u.urlopen(base + "/api/healthz", timeout=10).status == 200
+          m = u.urlopen(base + "/metrics", timeout=10).read().decode()
+          assert "portalpilot_business_scrape_ok 1.0" in m, "business metrics cannot read Postgres"
+          assert "portalpilot_double_submit_suspects 0.0" in m
+          print("smoke ok")
